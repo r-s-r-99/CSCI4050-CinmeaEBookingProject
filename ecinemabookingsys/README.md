@@ -17,14 +17,15 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## How to get the project running 
 
-1. Run in terminal: check for python and node.js versions
+1. Run in terminal: check for python and node.js versions (install them if they're aren't showing up)
 ```
 $ python --version
 Python 3.12.7
 $ node --version
 v22.11.0
 ```
-2. Switch to ecinemabookingsys and to run the vite/react app:
+3. Clone from project from repo
+2. Switch to ecinemabookingsys in terminal and to run the vite/react app:
    ```
    $ npm install
    $ npm run dev
