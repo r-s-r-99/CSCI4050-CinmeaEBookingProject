@@ -48,7 +48,7 @@ v22.11.0
    FLASK_ENV=development
    ```
 13. Open the file vite.config.js and add the server section, along with its proxy sub-section:
-   ```
+```
    import { defineConfig } from 'vite'
    import react from '@vitejs/plugin-react'
 
@@ -61,7 +61,7 @@ v22.11.0
         },
        },
      })
-    ```
+```
 11. Open the file package.json and find the scripts section. This is where all the React commands are configured. In this section, add a api command defined as follows:
 ```
   // ...
