@@ -24,30 +24,26 @@ Python 3.12.7
 $ node --version
 v22.11.0
 ```
-3. Create vite/react project
-   ```
-   npm create vite@latest react-with-flask -- --template react
-   ```
-5. Switch to ecinemabookingsys and to run the vite/react app:
+2. Switch to ecinemabookingsys and to run the vite/react app:
    ```
    $ npm install
    $ npm run dev
    ```
-7. when inside ecinemabookingsys directory, run:
+3. when inside ecinemabookingsys directory, run:
    ```
    bash -> source venv/bin/activate
    windows (cmd/poweshell) -> venv\Scripts\activate
    ```
-9. install flask dependencies:
+4. install flask dependencies:
    ```
    pip install flask python-dotenv
    ```
-11. create .env file inside of ecinemabookingsys directory, and add these two lines:
+5. create .env file inside of ecinemabookingsys directory, and add these two lines:
    ```
    FLASK_APP=api.py
    FLASK_ENV=development
    ```
-13. Open the file vite.config.js and add the server section, along with its proxy sub-section:
+6. Open the file vite.config.js and add the server section, along with its proxy sub-section:
 ```
    import { defineConfig } from 'vite'
    import react from '@vitejs/plugin-react'
@@ -62,7 +58,7 @@ v22.11.0
        },
      })
 ```
-11. Open the file package.json and find the scripts section. This is where all the React commands are configured. In this section, add a api command defined as follows:
+7. Open the file package.json and find the scripts section. This is where all the React commands are configured. In this section, add a api command defined as follows:
 ```
   // ...
   "scripts": {
