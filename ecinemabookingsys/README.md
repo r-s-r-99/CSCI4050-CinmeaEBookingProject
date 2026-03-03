@@ -18,35 +18,35 @@ If you are developing a production application, we recommend using TypeScript wi
 ## How to get the project running 
 
 1. Run in terminal: check for python and node.js versions
-   
+```
 $ python --version
 Python 3.12.7
 $ node --version
 v22.11.0
-
+```
 3. Create vite/react project
-   
+   ```
    npm create vite@latest react-with-flask -- --template react
-
+   ```
 5. Switch to ecinemabookingsys and to run the vite/react app:
-   
+   ```
    $ npm install
    $ npm run dev
-
+   ```
 7. when inside ecinemabookingsys directory, run:
-   
+   ```
    bash -> source venv/bin/activate
    windows (cmd/poweshell) -> venv\Scripts\activate
-
+   ```
 9. install flask dependencies:
-    
+   ```
    pip install flask python-dotenv
-
+   ```
 11. create .env file inside of ecinemabookingsys directory, and add these two lines:
-    
+   ```
    FLASK_APP=api.py
    FLASK_ENV=development
-
+   ```
 13. Open the file vite.config.js and add the server section, along with its proxy sub-section:
    ```
    import { defineConfig } from 'vite'
