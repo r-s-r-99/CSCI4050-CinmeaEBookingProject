@@ -1,0 +1,55 @@
+body { margin-top: 0px }
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 100px;
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.movies-tab { padding-left: 20px; padding-right: 10px; }
+.bookings-tab { padding-left: 10px; padding-right: 20px; }
+
+input {
+    height: 20px;
+}
+
+.movie-tix-div {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.movie-poster { width: 20% }
+
+
+.count-tix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px 42px;
+}
+
+.count-tix div {
+    display: flex;
+    flex-direction: column;
+}
+
+a { color: white }
+a:hover { color: rgba(255, 255, 255, 0.822) }
+
+.summary-div {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.checkoutInfo {
+    display: flex;
+    align-items: center
+}
