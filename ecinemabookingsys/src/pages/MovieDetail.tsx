@@ -11,35 +11,16 @@ export default function MovieDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch movie details
     fetch(`/api/movies/${id}`)
       .then(res => res.json())
-      .then(data => {
-        const m = data.movie;
-        setMovie({
-          id: m.movie_id,
-          title: m.title,
-          genre: m.genre,
-          rating: m.rating,
-          description: m.description,
-          poster_url: m.poster_url,
-          trailer_url: m.trailer_url,
-          status: m.status,
-        });
-      })
+      .then(data => setMovie(data.movie))
       .catch(err => console.error('Error fetching movie:', err));
 
+    // Fetch showtimes for this movie
     fetch(`/api/showtimes/${id}`)
       .then(res => res.json())
-      .then(data => {
-        const mapped = data.showtimes.map((s: any) => ({
-          id: s.showtime_id,
-          movieId: s.movie_id,
-          date: s.show_date,
-          time: s.show_time,
-          theater: 'Main Theater', // your DB doesn't have a theater column yet
-        }));
-        setShowtimes(mapped);
-      })
+      .then(data => setShowtimes(data.showtimes))
       .catch(err => console.error('Error fetching showtimes:', err))
       .finally(() => setLoading(false));
   }, [id]);
