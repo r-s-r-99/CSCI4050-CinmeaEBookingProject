@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Movie (
     description TEXT,                     
     poster_url VARCHAR(500),          
     trailer_url VARCHAR(500),             
-    status ENUM('In Theaters Now', 'Coming Soon') NOT NULL 
+    status ENUM('Currently Running', 'Coming Soon') NOT NULL 
 );
 
 CREATE TABLE IF NOT EXISTS Showtime (
