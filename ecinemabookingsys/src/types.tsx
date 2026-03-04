@@ -1,12 +1,12 @@
 export interface Movie {
-  id: string;
+  id: number;
   title: string;
   genre: string;
-  duration: number;
   rating: string;
   description: string;
-  image: string;
-  nowShowing: boolean;
+  poster_url: string;
+  trailer_url: string;
+  status: string;
 }
 
 export interface Showtime {
@@ -15,7 +15,6 @@ export interface Showtime {
   time: string;
   date: string;
   theater: string;
-  price: number;
 }
 
 export interface Seat {

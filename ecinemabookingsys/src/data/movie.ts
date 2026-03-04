@@ -65,34 +65,34 @@ export const movies: Movie[] = [
 
 export const showtimes: Showtime[] = [
   // Velocity Rush
-  { id: 's1', movieId: '1', time: '10:00 AM', date: '2026-02-22', theater: 'Screen 1', price: 12 },
-  { id: 's2', movieId: '1', time: '1:30 PM', date: '2026-02-22', theater: 'Screen 1', price: 15 },
-  { id: 's3', movieId: '1', time: '5:00 PM', date: '2026-02-22', theater: 'Screen 2', price: 15 },
-  { id: 's4', movieId: '1', time: '8:30 PM', date: '2026-02-22', theater: 'Screen 1', price: 18 },
+  { id: 's1', movieId: '1', time: '10:00 AM', date: '2026-02-22', theater: 'Screen 1'},
+  { id: 's2', movieId: '1', time: '1:30 PM', date: '2026-02-22', theater: 'Screen 1'},
+  { id: 's3', movieId: '1', time: '5:00 PM', date: '2026-02-22', theater: 'Screen 2'},
+  { id: 's4', movieId: '1', time: '8:30 PM', date: '2026-02-22', theater: 'Screen 1'},
   
   // Cosmic Horizon
-  { id: 's5', movieId: '2', time: '11:00 AM', date: '2026-02-22', theater: 'Screen 3', price: 15 },
-  { id: 's6', movieId: '2', time: '2:30 PM', date: '2026-02-22', theater: 'Screen 3', price: 15 },
-  { id: 's7', movieId: '2', time: '6:00 PM', date: '2026-02-22', theater: 'Screen 3', price: 18 },
-  { id: 's8', movieId: '2', time: '9:30 PM', date: '2026-02-22', theater: 'Screen 3', price: 18 },
+  { id: 's5', movieId: '2', time: '11:00 AM', date: '2026-02-22', theater: 'Screen 3'},
+  { id: 's6', movieId: '2', time: '2:30 PM', date: '2026-02-22', theater: 'Screen 3'},
+  { id: 's7', movieId: '2', time: '6:00 PM', date: '2026-02-22', theater: 'Screen 3'},
+  { id: 's8', movieId: '2', time: '9:30 PM', date: '2026-02-22', theater: 'Screen 3'},
   
   // The Haunting
-  { id: 's9', movieId: '3', time: '12:00 PM', date: '2026-02-22', theater: 'Screen 4', price: 12 },
-  { id: 's10', movieId: '3', time: '3:00 PM', date: '2026-02-22', theater: 'Screen 4', price: 15 },
-  { id: 's11', movieId: '3', time: '7:00 PM', date: '2026-02-22', theater: 'Screen 4', price: 15 },
-  { id: 's12', movieId: '3', time: '10:00 PM', date: '2026-02-22', theater: 'Screen 4', price: 18 },
+  { id: 's9', movieId: '3', time: '12:00 PM', date: '2026-02-22', theater: 'Screen 4'},
+  { id: 's10', movieId: '3', time: '3:00 PM', date: '2026-02-22', theater: 'Screen 4'},
+  { id: 's11', movieId: '3', time: '7:00 PM', date: '2026-02-22', theater: 'Screen 4'},
+  { id: 's12', movieId: '3', time: '10:00 PM', date: '2026-02-22', theater: 'Screen 4'},
   
   // Love in Paris
-  { id: 's13', movieId: '4', time: '11:30 AM', date: '2026-02-22', theater: 'Screen 5', price: 12 },
-  { id: 's14', movieId: '4', time: '2:00 PM', date: '2026-02-22', theater: 'Screen 5', price: 15 },
-  { id: 's15', movieId: '4', time: '5:30 PM', date: '2026-02-22', theater: 'Screen 5', price: 15 },
-  { id: 's16', movieId: '4', time: '8:00 PM', date: '2026-02-22', theater: 'Screen 5', price: 18 },
+  { id: 's13', movieId: '4', time: '11:30 AM', date: '2026-02-22', theater: 'Screen 5'},
+  { id: 's14', movieId: '4', time: '2:00 PM', date: '2026-02-22', theater: 'Screen 5'},
+  { id: 's15', movieId: '4', time: '5:30 PM', date: '2026-02-22', theater: 'Screen 5'},
+  { id: 's16', movieId: '4', time: '8:00 PM', date: '2026-02-22', theater: 'Screen 5'},
   
   // Adventure Kingdom
-  { id: 's17', movieId: '5', time: '10:30 AM', date: '2026-02-22', theater: 'Screen 6', price: 10 },
-  { id: 's18', movieId: '5', time: '1:00 PM', date: '2026-02-22', theater: 'Screen 6', price: 10 },
-  { id: 's19', movieId: '5', time: '3:30 PM', date: '2026-02-22', theater: 'Screen 6', price: 12 },
-  { id: 's20', movieId: '5', time: '6:00 PM', date: '2026-02-22', theater: 'Screen 6', price: 12 },
+  { id: 's17', movieId: '5', time: '10:30 AM', date: '2026-02-22', theater: 'Screen 6'},
+  { id: 's18', movieId: '5', time: '1:00 PM', date: '2026-02-22', theater: 'Screen 6'},
+  { id: 's19', movieId: '5', time: '3:30 PM', date: '2026-02-22', theater: 'Screen 6'},
+  { id: 's20', movieId: '5', time: '6:00 PM', date: '2026-02-22', theater: 'Screen 6'},
 ];
 
 export function getMovieById(id: string): Movie | undefined {
