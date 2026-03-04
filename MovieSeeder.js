@@ -1,0 +1,122 @@
+export const mockMovies = [
+    {
+      id: 1,
+      title: "The Godfather",
+      status: "Currently Running",
+      genre: "Crime",
+      rating: "R",
+      description: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+      poster: "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+      trailerURL: "https://www.youtube.com/embed/sY1S34973zA",
+      showtimes: ["2:00 PM", "5:00 PM", "8:00 PM"],
+      prices: { adult: 14.00, child: 10.00, senior: 11.00, student: 12.00 }
+    },
+    {
+      id: 2,
+      title: "Pulp Fiction",
+      status: "Currently Running",
+      genre: "Crime",
+      rating: "R",
+      description: "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+      poster: "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg",
+      trailerURL: "https://www.youtube.com/embed/s7EdQ4FqbhY",
+      showtimes: ["2:00 PM", "8:00 PM"],
+      prices: { adult: 14.00, child: 10.00, senior: 11.00, student: 12.00 }
+    },
+    {
+      id: 3,
+      title: "The Shawshank Redemption",
+      status: "Currently Running",
+      genre: "Drama",
+      rating: "R",
+      description: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+      poster: "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
+      trailerURL: "https://www.youtube.com/embed/6hB3S9bIaco",
+      showtimes: ["1:00 PM", "7:00 PM"],
+      prices: { adult: 14.00, child: 10.00, senior: 11.00, student: 12.00 }
+    },
+    {
+      id: 4,
+      title: "Spirited Away",
+      status: "Currently Running",
+      genre: "Animation",
+      rating: "PG",
+      description: "A young girl wanders into a world ruled by gods, witches, and spirits; where humans are changed into beasts.",
+      poster: "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+      trailerURL: "https://www.youtube.com/embed/ByXuk9QqQmc",
+      showtimes: ["11:00 AM", "3:00 PM"],
+      prices: { adult: 14.00, child: 10.00, senior: 11.00, student: 12.00 }
+    },
+    {
+      id: 5,
+      title: "Jurassic Park",
+      status: "Currently Running",
+      genre: "Sci-Fi",
+      rating: "PG-13",
+      description: "A theme park suffers a major power breakdown that allows its cloned dinosaur exhibits to run amok.",
+      poster: "https://image.tmdb.org/t/p/w500/9i3plLl89DHMz7mahksDaAo7HIS.jpg",
+      trailerURL: "https://www.youtube.com/embed/lc0UehYemQA",
+      showtimes: ["12:00 PM", "6:00 PM"],
+      prices: { adult: 14.00, child: 10.00, senior: 11.00, student: 12.00 }
+    },
+    {
+      id: 6,
+      title: "2001: A Space Odyssey",
+      status: "Coming Soon",
+      genre: "Sci-Fi",
+      rating: "G",
+      description: "After discovering a mysterious artifact buried beneath the Lunar surface, mankind sets off on a quest to find its origins.",
+      poster: "https://image.tmdb.org/t/p/w500/ve72VxNqjGM69Uky4WToA3q0uRf.jpg",
+      trailerURL: "https://www.youtube.com/embed/oR_e9y-bka0",
+      showtimes: null,
+      prices: null
+    },
+    {
+      id: 7,
+      title: "Casablanca",
+      status: "Coming Soon",
+      genre: "Romance",
+      rating: "PG",
+      description: "A cynical American expatriate encounters a former lover in Casablanca, Morocco during WWII.",
+      poster: "https://image.tmdb.org/t/p/w500/5K7cOHoay2mZusSLezBOY0Qxh8a.jpg",
+      trailerURL: "https://www.youtube.com/embed/BkL9l7qovsE",
+      showtimes: null,
+      prices: null
+    },
+    {
+      id: 8,
+      title: "The Shining",
+      status: "Coming Soon",
+      genre: "Horror",
+      rating: "R",
+      description: "A family heads to an isolated hotel for the winter where a sinister presence influences the father into violence.",
+      poster: "https://image.tmdb.org/t/p/w500/9fgh3Ns1iRzlQNYuJyK0ARQZU7w.jpg",
+      trailerURL: "https://www.youtube.com/embed/5Cb3ik6zP2I",
+      showtimes: null,
+      prices: null
+    },
+    {
+      id: 9,
+      title: "Singin' in the Rain",
+      status: "Coming Soon",
+      genre: "Musical",
+      rating: "G",
+      description: "A silent film star falls for a chorus girl during the difficult transition to talking pictures.",
+      poster: "https://image.tmdb.org/t/p/w500/w03EiJVHP8Un77boQeE7hg9DVdU.jpg",
+      trailerURL: "https://www.youtube.com/embed/5_EVHeNEIJY",
+      showtimes: null,
+      prices: null
+    },
+    {
+      id: 10,
+      title: "Seven Samurai",
+      status: "Coming Soon",
+      genre: "Action",
+      rating: "NR",
+      description: "A poor village recruits seven unemployed samurai to help them defend themselves against bandits.",
+      poster: "https://image.tmdb.org/t/p/w500/8OKmBV5BUFzmozIC3pPWKHy17kx.jpg",
+      trailerURL: "https://www.youtube.com/embed/7mw6LyyoeGE",
+      showtimes: null,
+      prices: null
+    }
+  ];
