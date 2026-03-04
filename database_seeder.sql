@@ -6,7 +6,7 @@ VALUES
 ('The Shawshank Redemption', 'Drama', 'R', 'prison life', '', 'https://www.youtube.com/embed/6hB3S9bIaco', 'Currently Running'),
 ('Spirited Away', 'Animation', 'PG', 'anime movie', '', 'https://www.youtube.com/embed/ByXuk9QqQmc', 'Currently Running'),
 ('Jurassic Park', 'Sci-Fi', 'PG-13', 'dinosaur rawr', '', 'https://www.youtube.com/embed/lc0UehYemQA', 'Currently Running'),
----
+--
 ('2001: A Space Odyssey', 'Sci-Fi', 'G', 'flying through space', '', 'https://www.youtube.com/embed/oR_e9y-bka0', 'Coming Soon'),
 ('Casablanca', 'Romance', 'PG', 'love', '', 'https://www.youtube.com/embed/BkL9l7qovsE', 'Coming Soon'),
 ('The Shining', 'Horror', 'R', 'scary', '', 'https://www.youtube.com/embed/5Cb3ik6zP2I', 'Coming Soon'),
