@@ -14,13 +14,35 @@ export default function MovieDetail() {
     // Fetch movie details
     fetch(`/api/movies/${id}`)
       .then(res => res.json())
-      .then(data => setMovie(data.movie))
+      .then(data => {
+        const m = data.movie;
+        setMovie({
+          id: m.movie_id,
+          title: m.title,
+          genre: m.genre,
+          rating: m.rating,
+          description: m.description,
+          poster_url: m.poster_url,
+          trailer_url: m.trailer_url,
+          status: m.status,
+        });
+      })
       .catch(err => console.error('Error fetching movie:', err));
 
     // Fetch showtimes for this movie
     fetch(`/api/showtimes/${id}`)
       .then(res => res.json())
-      .then(data => setShowtimes(data.showtimes))
+      .then(data => {
+        const mapped = data.showtimes.map((s: any) => ({
+          id: String(s.showtime_id),
+          movieId: String(s.movie_id),
+          date: new Date(s.show_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          time: s.show_time,
+          theater: 'Main Theater',
+        }));
+        console.log('mapped showtimes:', mapped); // ← add this
+        setShowtimes(mapped);
+      })
       .catch(err => console.error('Error fetching showtimes:', err))
       .finally(() => setLoading(false));
   }, [id]);
@@ -72,6 +94,20 @@ export default function MovieDetail() {
                 <span className="px-3 py-1 bg-red-600 rounded-full">{movie.genre}</span>
               </div>
               <p className="text-gray-300 text-lg leading-relaxed">{movie.description}</p>
+              {movie.trailer_url && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Watch Trailer</h3>
+                  <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                    <iframe
+                      src={movie.trailer_url}
+                      title={`${movie.title} Trailer`}
+                      className="absolute inset-0 w-full h-full rounded-lg"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

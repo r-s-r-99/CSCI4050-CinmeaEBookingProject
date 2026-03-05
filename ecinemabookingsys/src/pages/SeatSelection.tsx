@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { getShowtimeById, getMovieById } from '../data/movie';
-import { Seat } from '../types';
+import { Movie, Showtime, Seat } from '../types';
 import { ArrowLeft, Monitor } from 'lucide-react';
 
 type TicketCategory = 'adult' | 'senior' | 'child';
@@ -19,18 +18,49 @@ interface SeatWithCategory extends Seat {
 export default function SeatSelection() {
   const { showtimeId } = useParams();
   const navigate = useNavigate();
-  const showtime = getShowtimeById(showtimeId!);
-  const movie = showtime ? getMovieById(showtime.movieId) : null;
-
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [showtime, setShowtime] = useState<Showtime | null>(null);
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<TicketCategory>('adult');
   const [seatCategories, setSeatCategories] = useState<Record<string, TicketCategory>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/showtimes/detail/${showtimeId}`)
+      .then(res => res.json())
+      .then(data => {
+        const s = data.showtime;
+        setShowtime({
+          id: String(s.showtime_id),
+          movieId: String(s.movie_id),
+          date: new Date(s.show_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          time: s.show_time,
+          theater: 'Main Theater',
+        });
+        return fetch(`/api/movies/${s.movie_id}`);
+      })
+      .then(res => res.json())
+      .then(data => {
+        const m = data.movie;
+        setMovie({
+          id: m.movie_id,
+          title: m.title,
+          genre: m.genre,
+          rating: m.rating,
+          description: m.description,
+          poster_url: m.poster_url,
+          trailer_url: m.trailer_url,
+          status: m.status,
+        });
+      })
+      .catch(err => console.error('Error:', err))
+      .finally(() => setLoading(false));
+  }, [showtimeId]);
 
   useEffect(() => {
     const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     const seatsPerRow = 12;
     const newSeats: Seat[] = [];
-
     rows.forEach((row) => {
       for (let i = 1; i <= seatsPerRow; i++) {
         const isBooked = Math.random() < 0.3;
@@ -43,7 +73,6 @@ export default function SeatSelection() {
         });
       }
     });
-
     setSeats(newSeats);
   }, []);
 
@@ -51,7 +80,6 @@ export default function SeatSelection() {
     setSeats(prev => prev.map(seat => {
       if (seat.id === seatId && seat.status !== 'booked') {
         if (seat.status === 'selected') {
-          // Deselect — remove category too
           setSeatCategories(prev => {
             const updated = { ...prev };
             delete updated[seatId];
@@ -59,7 +87,6 @@ export default function SeatSelection() {
           });
           return { ...seat, status: 'available' };
         } else {
-          // Select — assign current category
           setSeatCategories(prev => ({ ...prev, [seatId]: selectedCategory }));
           return { ...seat, status: 'selected' };
         }
@@ -76,19 +103,16 @@ export default function SeatSelection() {
 
   const handleConfirmBooking = () => {
     if (selectedSeats.length === 0) return;
-
     const seatsWithCategory: SeatWithCategory[] = selectedSeats.map(seat => ({
       ...seat,
       category: seatCategories[seat.id] || 'adult',
     }));
-
     const booking = {
       showtime: showtime!,
       movie: movie!,
       seats: seatsWithCategory,
       totalPrice,
     };
-
     const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
     existingBookings.push({
       ...booking,
@@ -98,6 +122,10 @@ export default function SeatSelection() {
     localStorage.setItem('bookings', JSON.stringify(existingBookings));
     navigate('/confirmation', { state: booking });
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+  }
 
   if (!showtime || !movie) {
     return (
@@ -111,7 +139,7 @@ export default function SeatSelection() {
       </div>
     );
   }
-
+  
   const seatsByRow = seats.reduce((acc, seat) => {
     if (!acc[seat.row]) acc[seat.row] = [];
     acc[seat.row].push(seat);

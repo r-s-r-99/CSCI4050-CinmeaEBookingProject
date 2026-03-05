@@ -8,7 +8,7 @@ movies_bp = Blueprint('movies', __name__)
 def get_movies():
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT title FROM Movie")
+        cursor.execute("SELECT * FROM Movie") 
         home_movies = cursor.fetchall()
     conn.close()
     return {"movies": home_movies}
