@@ -2,33 +2,32 @@ import React, { useState } from 'react';
 import { mockMovies } from '../../mockData';
 import './BookingPage.css';
 
-/*
-TODO: Please help me refine the UI. It's currently really boring because I only programmed this page for functionality.
-TODO: Please  perhaps add the ability to select multiple seats based on the number of tickets chosen (already implemented). Currently only one seat can be chosen.
-*/
 
 
 const BookingPage = ({onBack}) => {
-    //The current seat is blank; no seat for the user by default
-    const [selectedSeat, setSelectedSeat] = useState("");
     //List of available seats to choose from (Will be in a dropdown menu)
-    const availableSeats = ["A1", "A2", "B1", "B2", "Z1", "Z2"];
+    const [availableSeats, setAvailableSeats] = useState(["A1", "A2", "B1", "B2", "Z1", "Z2"]);
+    //Set the chosen seats as an array to be displayed when chosen. Initially empty by default.
+    const [selectedSeats, setSelectedSeats] = useState([]);
     //Set the initial ticket quantities for the current user
     const [adultQuantity, setAdultQuantity] = useState(0);
     const [childQuantity, setChildQuantity] = useState(0);
     const [seniorQuantity, setSeniorQuantity] = useState(0);
     const [stuQuantity, setStuQuantity] = useState(0);
+    //Store the total number of tickets chosen by the user.
+    const totalTicketsChosen = adultQuantity + childQuantity + seniorQuantity + stuQuantity;
+    
 
     return (
         <div className="master-container">
             <nav>
                 <div className="menu-options">
                     {/*Links back to the home page.*/}
-                    <h1><a href="../App.jsx">CES THEATERS</a></h1>
+                    <h2><a href="../App.jsx">CES THEATERS</a></h2>
                     {/*TODO: Implement this to perhaps link to the movies page.*/}
-                    <h2 className="movies-tab">MOVIES</h2>
+                    <h3 className="movies-tab">MOVIES</h3>
                     {/*TODO: Implement this to perhaps link to the bookings page.*/}
-                    <h2 className="bookings-tab">BOOKINGS</h2>
+                    <h3 className="bookings-tab">BOOKINGS</h3>
                 </div>
 
                 {/*TODO: Implement this. Search does not work yet.*/}
@@ -98,7 +97,7 @@ const BookingPage = ({onBack}) => {
                     <div className="select-seat">
                         {/*Logic taken from https://stackoverflow.com/questions/62239420/steps-to-populate-dynamic-dropdown-using-arrays-in-reactjs-using-react-hooks and https://codesandbox.io/s/dropdown-react-p0nj7*/}
                         <label htmlFor="seats">Choose your seat:</label>
-                        <select name="seats" onChange={e => handleSeatSelect(e)} value={selectedSeat}> {/*Using the mock seats on line 12*/}
+                        <select name="seats" onChange={(e) => handleSeatSelect(e.target.value)} value=""> {/*Using the mock seats on line 12*/}
                             <option value="">Select a seat</option>
                             {availableSeats.map((seat, index) => (
                                 <option key={index} value={seat}>{seat}</option>
@@ -108,8 +107,15 @@ const BookingPage = ({onBack}) => {
 
                     <div className="book-sum">
                         <h2>BOOKING SUMMARY</h2>
-                        <p>Selected Seat: {selectedSeat}</p>
-                        <p><b>TOTAL PRICE: ${subtotal()}.00</b></p>
+                        <h4>Selected Seats: </h4>
+                        {selectedSeats.map((seat, index) => (
+                            <button 
+                                key={index} 
+                                onClick={() => handleSeatRemoval(seat)}>
+                                {seat}
+                            </button>
+                        ))}
+                        <p><b>SUBTOTAL: ${subtotal()}.00</b></p>
                     </div>
                 </div>
 
@@ -120,25 +126,57 @@ const BookingPage = ({onBack}) => {
     ); //JSX
 
     function subtotal() {
-        return (14*adultQuantity) + (10*childQuantity) + (11*seniorQuantity) + (12*stuQuantity);
-    } //returnSubtotal
+        return `${(14*adultQuantity) + (10*childQuantity) + (11*seniorQuantity) + (12*stuQuantity)}`;
+    } //subtotal
+
     function returnTickets() {
         if (adultQuantity==0 && childQuantity==0 && seniorQuantity==0 && stuQuantity==0) {
             return "You need to choose at least one ticket!";
         } //if
-        if (selectedSeat=="") {
+        if (selectedSeats.length==0) {
             return "You need to select a seat!";
         } //if
+
+        if (totalTicketsChosen > selectedSeats.length) {
+            return `You have chosen ${totalTicketsChosen} tickets. You must pick ${totalTicketsChosen} seats!`;
+        } //if
         const quantityMsg = `You are checking out ${adultQuantity} adult tickets, ${childQuantity} child tickets, ${seniorQuantity} senior tickets, and ${stuQuantity} student tickets.`;
-        return `${quantityMsg}\n\nYour seat is ${selectedSeat}.\n\nThe subtotal is $${subtotal()}.00.`;
+        return `${quantityMsg}\n\nYou have chosen seats ${selectedSeats}.\n\nYour subtotal is $${subtotal()}.00.`;
     } //returnTickets
 
     //handles the selection of seats in the select-seat div
-    function handleSeatSelect(e) {
-        const chosenSeat = e.target.value;
-        //set seat use state to the chosen seat
-        setSelectedSeat(chosenSeat);
+    function handleSeatSelect(seat) {
+        //The system will only allow you to choose a number of seats based on the number of tickets selected to prevent seat booking fraud.
+        if (selectedSeats.length >= totalTicketsChosen) {
+            alert(`You have chosen ${totalTicketsChosen} tickets. You are only allowed to pick ${totalTicketsChosen} seats!`);
+            return;
+        } //if
+
+        if (availableSeats.length == 0) {
+            alert("There are no more seats available!");
+            return;
+        } //if
+        /*When a seat is chosen, remove it from the availableSeat array and add it to the selectedSeat array
+          Use the filter array function to create a new array and remove that array from the availableSeats array
+        */
+        const removeAvailable = availableSeats.filter(ps => ps !== seat);
+        setAvailableSeats(removeAvailable);
+
+        //Add those selected seats to the new selectedSeats array
+        setSelectedSeats([...selectedSeats, seat]);
     } //handleSeatSelect
+
+    //handles the removal of selected seats
+    function handleSeatRemoval(seat) {
+        //Remove seats from chosen list
+        const removeSelected = selectedSeats.filter(ps => ps !== seat);
+        setSelectedSeats(removeSelected);
+
+        //Add that removed array of seats back to the available seats
+        setAvailableSeats([...availableSeats, seat]);
+    } //handleSeatRemoval
+
+
 
 }; //BookingPage
 
