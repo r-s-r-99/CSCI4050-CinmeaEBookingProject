@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"cd api && venv/bin/flask run --port 5001\"",
+    "api": "cd api && venv/bin/flask run --port 5001",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "api": "cd api && venv/bin/flask run --no-debugger"
+    "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",
@@ -22,6 +22,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
