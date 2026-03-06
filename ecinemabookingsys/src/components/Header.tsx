@@ -14,7 +14,7 @@ export function Header() {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-2xl">
             <Film className="w-8 h-8 text-red-500" />
-            <span>CineBook</span>
+            <span>Cinema E-Booking System</span>
           </Link>
           
           <nav className="flex items-center gap-6">
