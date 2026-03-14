@@ -1,0 +1,11 @@
+@startuml   
+class Customer {
+    - userId: int
+    - name: String
+}
+class PaymentCard {
+    - cardNumber: String
+    - expirationDate: Date
+}
+Customer "1" --> "0..3" PaymentCard
+@enduml
