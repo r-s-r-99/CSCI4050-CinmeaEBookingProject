@@ -2,10 +2,12 @@
 class Customer {
     - userId: int
     - name: String
+    - testCustomer: String
 }
 class PaymentCard {
     - cardNumber: String
     - expirationDate: Date
+    - testPaymentCard: String
 }
 Customer "1" --> "0..3" PaymentCard
 @enduml
