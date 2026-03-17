@@ -155,7 +155,7 @@ Showtime "1" --> "1" Movie : screens
 Showtime "1" --> "1" Showroom : scheduledIn
 MovieTheater "1" *-- "1..*" Showroom : contains
 Cinema "1" *-- "1" MovieTheater : contains
-RecommendationService ..> Customer : uses customer data
+RecommendationService ..> Customer : retrieves customer data
 RecommendationService ..> Movie : analyzes movies
-RecommendationService ..> Booking : reads booking history
+RecommendationService ..> Booking : analyzes booking history
 @enduml
