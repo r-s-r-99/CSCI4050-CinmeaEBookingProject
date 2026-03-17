@@ -16,8 +16,10 @@ class Customer {
     - accountStatus : AccountStatus 
     - mailingAddress : MailingAddress 
     - favoriteMovies : favoriteMovies 
-    + addPaymentCard(paymentCards) : void 
-    + addMailingAddress(String) : void 
+    + makeBooking(Showtime) : void
+    + addPaymentCard(PaymentCards) : void 
+    + removePaymentCard(PaymentCards) : void
+    + addMailingAddress(houseNumber, street, aptNum, zip) : void 
     + subscribeToPromotions() : void 
     + unsubscribeToPromotions() : void 
     + bookingHistory() : Booking[]
@@ -129,38 +131,31 @@ class Promotion {
     - startDate : Date 
     - endDate : Date 
 } 
-class Recommendation { 
-    - recommendationId: int 
-    - generatedAt: DateTime 
-    - modelUsed: String 
+class RecommendationService {
+    + generateRecommendations(customer)
 } 
-class RecommendedMovie { 
-    - movie: Movie 
-    - rank: int 
-} 
-User <|-- Admin 
-User <|-- Customer 
 Customer "1" -- "1" AccountStatus 
-Customer "1" -- "0..*" Booking : makes
-Booking "1" -- "0..1" Promotion : applies 
-Booking "1" *-- "1..*" Ticket : contains
-Customer "1" *-- "0..3" PaymentCard 
-Booking "1" --> "1" PaymentCard : paidWith
 Ticket "1" -- "1" TicketType 
-Showtime "1" *-- "0..*" Ticket 
-MovieTheater "1" *-- "1..*" Showroom 
-Showroom "0..*" -- "*" Movie 
-(Showroom, Movie) .. Showtime 
 Movie "*" -- "1" Genre 
 Movie "*" -- "1" Rating 
 Movie "*" -- "1" Status 
-Customer "1" *-- "0..1" MailingAddress 
-Showroom "1" *-- "1..*" Seat 
-Ticket "1" -- "1" Seat 
-Cinema "1" *-- "1" MovieTheater 
-Customer "1" -- "0..1" Recommendation 
-RecommendedMovie --> Movie
-Recommendation "1" *-- "1..*" RecommendedMovie 
+User <|-- Customer
+User <|-- Admin
+Customer "1" *-- "0..3" PaymentCard : stores
+Customer "1" *-- "0..1" MailingAddress : livesAt
+Booking "1" *-- "1..*" Ticket : contains
+Showroom "1" *-- "1..*" Seat : has
+Customer "1" -- "0..*" Booking : makes
 Customer "1" -- "0..*" Movie : favorites
-Booking "1" --> "1" Showtime
+Booking "1" --> "1" Showtime : for
+Booking "1" --> "1" PaymentCard : paidWith
+Booking "1" --> "0..1" Promotion : applies
+Ticket "1" --> "1" Seat : reserves
+Showtime "1" --> "1" Movie : screens
+Showtime "1" --> "1" Showroom : scheduledIn
+MovieTheater "1" *-- "1..*" Showroom : contains
+Cinema "1" *-- "1" MovieTheater : contains
+RecommendationService ..> Customer
+RecommendationService ..> Movie
+RecommendationService ..> Booking
 @enduml
