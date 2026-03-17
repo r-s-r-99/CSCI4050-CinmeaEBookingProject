@@ -1,13 +1,166 @@
-@startuml   
-class Customer {
-    - userId: int
-    - name: String
-    - testCustomer: String
-}
-class PaymentCard {
-    - cardNumber: String
-    - expirationDate: Date
-    - testPaymentCard: String
-}
-Customer "1" --> "0..3" PaymentCard
+@startuml 
+class User {
+    - userId : int 
+    - password : String 
+    + login(userId, password) : void 
+    + logout() : void 
+    + editProfile() : void 
+    + changePassword(password) : void 
+} 
+class Customer { 
+    - firstName : String 
+    - lastName : String 
+    - email : String 
+    - phoneNumber : String 
+    - cardsSaved : PaymentCard[] 
+    - accountStatus : AccountStatus 
+    - mailingAddress : MailingAddress 
+    - favoriteMovies : favoriteMovies 
+    + addPaymentCard(paymentCards) : void 
+    + addMailingAddress(String) : void 
+    + subscribeToPromotions() : void 
+    + unsubscribeToPromotions() : void 
+    + bookingHistory() : Booking[]
+    + returnBooking(Booking) : void
+} 
+class PaymentCard { 
+    - cardNumber: String 
+    - expirationDate: Date 
+    - billingAddress: MailingAddress 
+} 
+class MailingAddress { 
+    - houseNumber: int 
+    - street: String 
+    - aptNum: int 
+    - zip: String 
+} 
+enum AccountStatus { 
+    Active
+    Suspended 
+    Inactive 
+} 
+class Movie { 
+    - movieId : int 
+    - title : String 
+    - movieRating : Rating 
+    - category : Genre 
+    - description : String 
+    - trailerLink : String 
+    - showStatus : Status
+} 
+enum Status { 
+    nowShowing 
+    comingSoon 
+} 
+enum Rating { 
+    G 
+    PG 
+    PG-13 
+    R 
+} 
+enum Genre { 
+    Comedy 
+    Horror 
+    Action 
+    Adventure 
+    Animated 
+    Drama 
+    Fantasy 
+    Historical 
+    Science Fiction 
+    Thriller 
+    Western 
+} 
+class Admin { 
+    - name : String 
+    - email : String
+    + createMovie(title, movieRating, category, description, trailerLink, showStatus) : void
+    + deleteMovie(Movie) : void
+    + updateMovie(Movie) : void
+    + createPromotion(code, discountAmount) : void
+    + discontinuePromotion(code) : void 
+    + setTicketPrice(TicketType, price) : void
+} 
+class Ticket { 
+    - ticketType : TicketType 
+    - seatNumber : Seat 
+    - ticketPrice : double 
+    + getTicketPrice(ticketType) : double 
+} 
+enum TicketType { 
+    Child 
+    Adult 
+    Senior 
+} 
+class Showtime { 
+    - showId : int 
+    - date : Date 
+    - timeOfShowing : Time 
+    - room : Showroom 
+    - movie : Movie 
+    - ticketsAvailable : int 
+} 
+class Showroom { 
+    - roomNumber : int 
+    - numberOfSeats : int 
+} 
+class Seat { 
+    - seatId : int
+    - seatNumber : String 
+    - showroom : Showroom 
+} 
+class MovieTheater { 
+    showrooms : Showroom[] 
+} 
+class Cinema { 
+    theater : MovieTheater 
+} 
+class Booking { 
+    - bookingId : int
+    - tickets : Ticket[] 
+    - totalPrice : double 
+    - card : PaymentCard 
+    + calculateTotal(Ticket[]) : double 
+    - applyPromotion(Promotion) : void 
+} 
+class Promotion { 
+    - code : String 
+    - discountPercentage : double 
+    - startDate : Date 
+    - endDate : Date 
+} 
+class Recommendation { 
+    - recommendationId: int 
+    - generatedAt: DateTime 
+    - modelUsed: String 
+} 
+class RecommendedMovie { 
+    - movie: Movie 
+    - rank: int 
+} 
+User <|-- Admin 
+User <|-- Customer 
+Customer "1" -- "1" AccountStatus 
+Customer "1" -- "0..*" Booking : makes
+Booking "1" -- "0..1" Promotion : applies 
+Booking "1" *-- "1..*" Ticket : contains
+Customer "1" *-- "0..3" PaymentCard 
+Booking "1" --> "1" PaymentCard : paidWith
+Ticket "1" -- "1" TicketType 
+Showtime "1" *-- "0..*" Ticket 
+MovieTheater "1" *-- "1..*" Showroom 
+Showroom "0..*" -- "*" Movie 
+(Showroom, Movie) .. Showtime 
+Movie "*" -- "1" Genre 
+Movie "*" -- "1" Rating 
+Movie "*" -- "1" Status 
+Customer "1" *-- "0..1" MailingAddress 
+Showroom "1" *-- "1..*" Seat 
+Ticket "1" -- "1" Seat 
+Cinema "1" *-- "1" MovieTheater 
+Customer "1" -- "0..1" Recommendation 
+RecommendedMovie --> Movie
+Recommendation "1" *-- "1..*" RecommendedMovie 
+Customer "1" -- "0..*" Movie : favorites
+Booking "1" --> "1" Showtime
 @enduml
