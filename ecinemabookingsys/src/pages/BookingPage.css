@@ -1,0 +1,89 @@
+html, body { 
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+
+.master-container {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: visible; 
+    min-height: 100vh;
+}
+
+nav {
+    display: flex;
+    position: sticky;
+    top: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 25px;
+    margin: 0px 0px 30px 0px;
+    background-color: black;
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.movies-tab { padding-left: 20px; padding-right: 10px; }
+.bookings-tab { padding-left: 10px; padding-right: 20px; }
+
+input {
+    height: 20px;
+}
+
+.movie-tix-div {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.movie-poster { width: 20% }
+
+
+.count-tix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px 42px;
+}
+
+.count-tix div {
+    display: flex;
+    flex-direction: column;
+}
+
+.count-tix form {
+    display: flex;
+    justify-content: row;
+    align-items: center;
+}
+
+.count-tix button {
+    display: flex;
+    width: 50%;
+    height: 70%;
+    justify-items: center;
+    align-items: center;
+}
+
+a { color: white }
+a:hover { color: rgba(255, 255, 255, 0.822) }
+
+.summary-div {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.checkoutInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
