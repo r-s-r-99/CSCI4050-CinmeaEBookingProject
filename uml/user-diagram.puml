@@ -15,7 +15,6 @@ class Customer {
     - cardsSaved : PaymentCard[] 
     - accountStatus : AccountStatus 
     - mailingAddress : MailingAddress 
-    - favoriteMovies : favoriteMovies 
     + makeBooking(Showtime) : void
     + addPaymentCard(PaymentCards) : void 
     + removePaymentCard(PaymentCards) : void
@@ -131,9 +130,14 @@ class Promotion {
     - startDate : Date 
     - endDate : Date 
 } 
-class RecommendationService {
-    + generateRecommendations(customer)
-} 
+class Preference {
+    - dateAdded : Date
+    - preferenceScore: int
+}
+class Recommendation {
+    - recommendationDate : Date
+    - score : double
+}
 Customer "1" -- "1" AccountStatus 
 Ticket "1" -- "1" TicketType 
 Movie "*" -- "1" Genre 
@@ -150,12 +154,13 @@ Customer "1" -- "0..*" Movie : favorites
 Booking "1" --> "1" Showtime : for
 Booking "1" --> "1" PaymentCard : paidWith
 Booking "1" --> "0..1" Promotion : applies
-Ticket "1" --> "1" Seat : reserves
+Showtime "1" -- "1..*" Seat : hasSeats
 Showtime "1" --> "1" Movie : screens
 Showtime "1" --> "1" Showroom : scheduledIn
 MovieTheater "1" *-- "1..*" Showroom : contains
 Cinema "1" *-- "1" MovieTheater : contains
-RecommendationService ..> Customer : retrieves customer data
-RecommendationService ..> Movie : analyzes movies
-RecommendationService ..> Booking : analyzes booking history
+Customer "1" -- "0..*" Preference : hasPreferences
+Customer "1" -- "0..*" Recommendation : recommends
+Preference "0..*" -- "1" Movie : refersTo
+Recommendation "0..*" -- "1" Movie : recommends
 @enduml
