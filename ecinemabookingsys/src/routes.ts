@@ -8,10 +8,10 @@ import BookingPage from './pages/BookingPage';
 import { Bookings } from './pages/Bookings';
 import Login from './pages/Login';
 import Register from './pages/Register';
-<<<<<<< HEAD
 import AdminHome from './pages/AdminHome';
-=======
->>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
+import Profile from './pages/Profile';
+import MockEmailConfirm from './pages/MockEmailConfirm';
+
 
 export const router = createBrowserRouter([
   {
@@ -25,13 +25,9 @@ export const router = createBrowserRouter([
       { path: 'bookings', Component: Bookings },
       { path: 'login', Component: Login },
       { path: 'register', Component: Register },
-<<<<<<< HEAD
       { path: 'adminhome', Component: AdminHome },
+      { path: 'profile', Component: Profile },
+      { path: 'mockemailconfirm', Component: MockEmailConfirm },
     ],
   },
 ]);
-=======
-    ],
-  },
-]);
->>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d

@@ -1,23 +1,15 @@
 import pymysql
-<<<<<<< HEAD
 import bcrypt
-=======
->>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
 
 def get_db():
     return pymysql.connect(
         host="127.0.0.1",
-<<<<<<< HEAD
         port=3306,
-=======
-        port=33306,
->>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
         user="root",
         password="mysqlpass",
         database="cinemaebooking",
         cursorclass=pymysql.cursors.DictCursor
     )
-<<<<<<< HEAD
 
 #Validate Login Credentials. Parameters are email and password typed by the user.
 def validate_login(username_email, provided_password):
@@ -57,5 +49,38 @@ def is_logged_in(user_id):
         return True
     else:
         return False
-=======
->>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
+
+#Store registration information in the database with active/inactive status
+def registration(username, email, password, first_name, last_name, phone_number):
+    conn = get_db()
+    try:
+        # Hash the entered password using bcrypt
+        hashedPW = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        with conn.cursor() as cursor:
+            # The account status defaults to inactive until the user confirms their email.
+            sql = "INSERT INTO User (username, email, password, first_name, last_name, phone_number, account_status) VALUES (%s, %s, %s, %s, %s, %s, 'Inactive')"
+            cursor.execute(sql, (username, email, hashedPW, first_name, last_name, phone_number))
+        
+        conn.commit()
+        return "User Registered Successfully"
+    except Exception as e:
+        print(f"Error: {e}")
+        return "Error"
+    finally:
+        conn.close()
+    
+def activate_user(email):
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            # Update the status from Inactive to Active
+            sql = "UPDATE User SET account_status = 'Active' WHERE email = %s"
+            cursor.execute(sql, (email,))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f" Error: {e}")
+        return False
+    finally:
+        conn.close()
