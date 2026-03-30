@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"cd api && venv/bin/flask run --port 5001\"",
-    "api": "cd api && venv/bin/flask run --port 5001",
+    "dev": "concurrently \"vite\" \"cd api && python -m flask run --port 5001\"",
+    "api": "cd api && python -m flask run --port 5001",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
