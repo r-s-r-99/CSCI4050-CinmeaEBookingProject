@@ -3,6 +3,7 @@ USE cinemaebooking;
 
 CREATE TABLE IF NOT EXISTS User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
@@ -163,8 +164,9 @@ INSERT INTO Promotion (code, discount_percentage, start_date, end_date, tickets_
 ('WELCOME10', 10.0, '2026-04-01', '2026-04-30', 100),
 ('SUMMER20', 20.0, '2026-06-01', '2026-08-31', 500);
 
-INSERT INTO User (email, password, first_name, last_name, role, account_status)
+INSERT INTO User (username, email, password, first_name, last_name, role, account_status)
 VALUES (
+    'admin',
     'admin@cinemabooking.com',
     '$2b$12$KIXn7rHQL5L0Eup3vMnVeeSBCMQb4Y7JxHFCGvHzSl6VTT0FBJlwu',
     'Admin',
