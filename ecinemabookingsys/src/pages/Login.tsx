@@ -74,7 +74,7 @@ const Login = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <button className="italic text-blue-600 hover:text-blue-800 hover:underline">Forgot Password?</button>
+                    <button onClick={() => navigate('/forgotpassword')} className="italic text-blue-600 hover:text-blue-800 hover:underline">Forgot Password?</button>
                 </div>
 
                 {/*Display error message upon unsuccessful login*/}

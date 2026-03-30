@@ -4,7 +4,7 @@ from routes.movies import movies_bp
 from routes.showtimes import showtimes_bp
 from db import get_db, validate_login
 from flask import request, jsonify
-from db import get_db, validate_login, registration, activate_user
+from db import get_db, validate_login, registration, activate_user, update_password
 
 app = Flask(__name__)
 
@@ -93,6 +93,20 @@ def confirm_email():
         return jsonify({"message": "Account activated successfully!"}), 200
     
     return jsonify({"message": "Activation failed."}), 400
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_pass():
+    email = request.json.get('email')
+    # Mock link
+    print(f"Password is being reset for {email}")
+    return jsonify({"message": "Link sent to terminal!"})
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_pass():
+    data = request.json
+    # Call a new db function to update the password
+    update_password(data['email'], data['newPassword'])
+    return jsonify({"message": "Password updated"})
 
 
 if __name__ == '__main__':

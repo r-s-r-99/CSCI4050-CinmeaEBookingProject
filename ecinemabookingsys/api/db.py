@@ -84,3 +84,11 @@ def activate_user(email):
         return False
     finally:
         conn.close()
+
+def update_password(email, new_password):
+    conn = get_db()
+    hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    with conn.cursor() as cursor:
+        cursor.execute("UPDATE User SET password = %s WHERE email = %s", (hashed, email))
+    conn.commit()
+    conn.close()

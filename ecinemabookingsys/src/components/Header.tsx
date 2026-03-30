@@ -57,9 +57,9 @@ export function Header() {
               </Link>
 
               <Link
-                to="/profile"
+                to="/editprofile"
                 className={`flex items-center gap-2 hover:text-red-400 transition-colors ${
-                  isActive('/profile') ? 'text-red-400' : ''
+                  isActive('/editprofile') ? 'text-red-400' : ''
                 }`}
               >
                 <User className="w-5 h-5" />
@@ -68,7 +68,7 @@ export function Header() {
 
               <button onClick={handleLogout} 
                 className={`flex items-center gap-2 hover:text-red-400 transition-colors ${
-                  isActive('/profile') ? 'text-red-400' : ''
+                  isActive('/editprofile') ? 'text-red-400' : ''
                   }`}
                 >
                   <LogOut className="w-5 h-5"/>
