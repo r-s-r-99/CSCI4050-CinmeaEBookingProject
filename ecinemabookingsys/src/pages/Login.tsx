@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +47,11 @@ const Login = () => {
         } //try/catch
     }; //handleLogin
 
+=======
+import React from 'react';
+
+const Login = () => {
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
     return (
         <div className="min-h-screen flex items-center justify-center flex-col"> {/*The master div*/}
             <h1 className="text-3xl font-bold text-center mb-3">Welcome! Login or Sign Up</h1>
@@ -55,6 +61,7 @@ const Login = () => {
                 {/*The email div*/}
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Email:</h1>
+<<<<<<< HEAD
                     <input
                         type="email"
                         className="border-2 border-gray-200 bg-transparent p-2 rounded-lg"
@@ -62,11 +69,15 @@ const Login = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
+=======
+                    <input type="email" className="border-2 border-gray-200 bg-transparent p-2 rounded-lg"/>
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
                 </div>
 
                 {/*The password div*/}
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Password:</h1>
+<<<<<<< HEAD
                     <input 
                         type="password"
                         className="border-2 border-gray-200 bg-transparent p-2 rounded-lg"
@@ -93,6 +104,16 @@ const Login = () => {
                         className="py-3 rounded-lg font-bold bg-gray-500 hover:bg-gray-600 text-white">
                             Register
                     </button>
+=======
+                    <input type="password" className="border-2 border-gray-200 bg-transparent p-2 rounded-lg"/>
+                    <button className="italic text-blue-600 hover:text-blue-800 hover:underline">Forgot Password?</button>
+                </div>
+
+                {/*login/register buttons div*/}
+                <div className="flex flex-col gap-3">
+                    <button className="py-3 rounded-lg font-bold bg-red-500 hover:bg-red-600 text-white">Login</button>
+                    <button className="py-3 rounded-lg font-bold bg-gray-500 hover:bg-gray-600 text-white">Register</button>
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
                 </div>
             </div>
 
@@ -103,6 +124,9 @@ const Login = () => {
     ); //return
 }; //const Login
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
 export default Login;

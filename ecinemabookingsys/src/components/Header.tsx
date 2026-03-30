@@ -27,6 +27,10 @@ export function Header() {
               <Film className="w-5 h-5" />
               <span>Movies</span>
             </Link>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
             <Link
               to="/bookings"
               className={`flex items-center gap-2 hover:text-red-400 transition-colors ${

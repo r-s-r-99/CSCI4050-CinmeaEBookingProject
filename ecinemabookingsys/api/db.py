@@ -1,15 +1,23 @@
 import pymysql
+<<<<<<< HEAD
 import bcrypt
+=======
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
 
 def get_db():
     return pymysql.connect(
         host="127.0.0.1",
+<<<<<<< HEAD
         port=3306,
+=======
+        port=33306,
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
         user="root",
         password="mysqlpass",
         database="cinemaebooking",
         cursorclass=pymysql.cursors.DictCursor
     )
+<<<<<<< HEAD
 
 #Validate Login Credentials. Parameters are email and password typed by the user.
 def validate_login(username_email, provided_password):
@@ -49,3 +57,5 @@ def is_logged_in(user_id):
         return True
     else:
         return False
+=======
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d

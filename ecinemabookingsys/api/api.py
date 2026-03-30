@@ -2,8 +2,12 @@ import time
 from flask import Flask
 from routes.movies import movies_bp
 from routes.showtimes import showtimes_bp
+<<<<<<< HEAD
 from db import get_db, validate_login
 from flask import request, jsonify
+=======
+from db import get_db
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
 
 app = Flask(__name__)
 
@@ -20,6 +24,7 @@ def ping():
     conn.close()
     return {'status': 'connected'}
 
+<<<<<<< HEAD
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -48,3 +53,7 @@ def login():
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
+=======
+if __name__ == '__main__':
+    app.run(port=5001, debug=True)
+>>>>>>> 8be98aec0653c67effbcb9c085b185255649a10d
