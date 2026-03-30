@@ -36,10 +36,15 @@ export function Header() {
               <Ticket className="w-5 h-5" />
               <span>My Bookings</span>
             </Link>
-            <button className="flex items-center gap-2 hover:text-red-400 transition-colors">
+            <Link
+              to="/settings/edit-profile"
+              className={`flex items-center gap-2 hover:text-red-400 transition-colors ${
+                isActive('/settings/edit-profile') ? 'text-red-400' : ''
+              }`}
+            >
               <User className="w-5 h-5" />
-              <span>Account</span>
-            </button>
+              <span>Profile</span>
+            </Link>
           </nav>
         </div>
       </div>
