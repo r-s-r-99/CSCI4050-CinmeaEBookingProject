@@ -1,4 +1,4 @@
-import { Film, Ticket, User } from 'lucide-react';
+import { Film, Ticket, User, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 
 export function Header() {
@@ -36,10 +36,31 @@ export function Header() {
               <Ticket className="w-5 h-5" />
               <span>My Bookings</span>
             </Link>
-            <button className="flex items-center gap-2 hover:text-red-400 transition-colors">
-              <User className="w-5 h-5" />
-              <span>Account</span>
-            </button>
+  
+            <Link
+              to="/login"
+              className={`flex items-center gap-2 hover:text-red-400 transition-colors ${
+                isActive('/login') ? 'text-red-400' : ''
+              }`}
+            >
+            <LogIn className="w-5 h-5" />
+            <span>Login</span>
+          </Link>
+
+
+          <Link
+              to="/register"
+              className={`flex items-center gap-2 hover:text-red-400 transition-colors ${
+                isActive('/register') ? 'text-red-400' : ''
+              }`}
+            >
+            <LogIn className="w-5 h-5" />
+            <span>Register</span>
+          </Link>
+
+
+          
+
           </nav>
         </div>
       </div>

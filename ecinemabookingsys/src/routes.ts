@@ -6,6 +6,9 @@ import SeatSelection from './pages/SeatSelection';
 import Confirmation from './pages/Confirmation';
 import BookingPage from './pages/BookingPage';
 import { Bookings } from './pages/Bookings';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AdminHome from './pages/AdminHome';
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +20,9 @@ export const router = createBrowserRouter([
       { path: 'booking/:showtimeId', Component: SeatSelection },
       { path: 'confirmation', Component: Confirmation },
       { path: 'bookings', Component: Bookings },
+      { path: 'login', Component: Login },
+      { path: 'register', Component: Register },
+      { path: 'adminhome', Component: AdminHome },
     ],
   },
 ]);
