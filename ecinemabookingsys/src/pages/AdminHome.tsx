@@ -1,17 +1,24 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReceiptText, UserPen, Clapperboard, CalendarClock, } from 'lucide-react';
 
-import { Movie } from '../types';
 
 const AdminHome = () => {
     const navigate = useNavigate();
 
-    //Upon logout, redirect to normal home page.
-    const handleLogout = () => {
-        sessionStorage.clear();
-        navigate('/');
-    }; //handleLogout
+    //This makes sure that only the admin can access this page.
+    useEffect(() => {
+        //Get the current user info from the current session
+        const userS = sessionStorage.getItem('user');
+        //If found, assign the session's user to the user constant. null if not found (Not logged in)
+        const user = userS ? JSON.parse(userS) : null;
+
+        //If there is no user currently logged in or if the logged in user is not an admin, redirect them to the home page and display a warning.
+        if (user===null || user.role !== 'admin') {
+            alert("Access Denied. you are attempting to access an admin page!");
+            navigate('/');
+        } //if
+    });
 
     return (
         <div className="min-h-screen bg-gray-100">
