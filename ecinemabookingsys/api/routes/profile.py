@@ -119,12 +119,12 @@ def update_profile_address():
                     UPDATE MailingAddress 
                     SET house_number = %s, street = %s, apt = %s, zip = %s 
                     WHERE user_id = %s
-                """, (data.get('houseNumber'), data.get('street'), data.get('apt'), data.get('zip'), user_id))
+                """, (data.get('houseNumber'), data.get('street'), data.get('apt'), data.get('zipCode'), user_id))
             else:
                 cursor.execute("""
                     INSERT INTO MailingAddress (user_id, house_number, street, apt, zip) 
                     VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, data.get('houseNumber'), data.get('street'), data.get('apt'), data.get('zip')))
+                """, (user_id, data.get('houseNumber'), data.get('street'), data.get('apt'), data.get('zipCode')))
 
         conn.commit()
         return jsonify({'message': 'Address updated successfully'}), 200
@@ -171,20 +171,37 @@ def update_profile_payment():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json()
-    card_id         = data.get('cardId')
+    card_id         = data.get('cardId')   # None for brand-new cards
     card_number     = data.get('cardNumber', '').replace(' ', '')
     expiration_date = data.get('expirationDate')
+
+    # Convert MM/YY → YYYY-MM-DD for MySQL DATE column
+    if expiration_date and '/' in expiration_date:
+        month, year = expiration_date.split('/')
+        expiration_date = f"20{year.strip()}-{month.strip()}-01"
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("""
-                UPDATE PaymentCard 
-                SET card_number = %s, expiration_date = %s 
-                WHERE card_id = %s AND user_id = %s
-            """, (card_number, expiration_date, card_id, user_id))
+            if card_id is None:
+                # Brand-new card — check user doesn't already have 3
+                cursor.execute("SELECT COUNT(*) AS cnt FROM PaymentCard WHERE user_id = %s", (user_id,))
+                row = cursor.fetchone()
+                if row['cnt'] >= 3:
+                    return jsonify({'error': 'Maximum of 3 cards allowed.'}), 400
+                cursor.execute("""
+                    INSERT INTO PaymentCard (user_id, card_number, expiration_date)
+                    VALUES (%s, %s, %s)
+                """, (user_id, card_number, expiration_date))
+            else:
+                # Existing card — update it
+                cursor.execute("""
+                    UPDATE PaymentCard 
+                    SET card_number = %s, expiration_date = %s 
+                    WHERE card_id = %s AND user_id = %s
+                """, (card_number, expiration_date, card_id, user_id))
         conn.commit()
-        return jsonify({'message': 'Payment card updated successfully'}), 200
+        return jsonify({'message': 'Payment card saved successfully'}), 200
 
     except Exception as e:
         conn.rollback()

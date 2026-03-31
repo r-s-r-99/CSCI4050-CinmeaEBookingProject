@@ -1,46 +1,127 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard, Plus, Trash2 } from 'lucide-react';
 
 interface PaymentCardForm {
-  id: number;
+  id: number;       // local temp id for new cards; card_id from DB for existing
+  cardId?: number;  // DB primary key (undefined for new unsaved cards)
   cardNumber: string;
   nameOnCard: string;
   expiryDate: string;
   cvv: string;
+  isNew?: boolean;  // true = not yet in DB
 }
 
-const emptyCard = (id: number): PaymentCardForm => ({
-  id,
+const emptyCard = (): PaymentCardForm => ({
+  id: Date.now(),
   cardNumber: '',
   nameOnCard: '',
   expiryDate: '',
   cvv: '',
+  isNew: true,
 });
 
 export default function PaymentCards() {
   const [cards, setCards] = useState<PaymentCardForm[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/retrieve-payment-cards', { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load payment cards');
+        return res.json();
+      })
+      .then((data: { cardId: number; cardNumber: string; expirationDate: string }[]) => {
+        setCards(data.map(c => ({
+          id: c.cardId,
+          cardId: c.cardId,
+          cardNumber: c.cardNumber ?? '',
+          nameOnCard: '',
+          expiryDate: c.expirationDate ?? '',
+          cvv: '',
+          isNew: false,
+        })));
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const handleAddCard = () => {
     if (cards.length < 3) {
-      setCards([...cards, emptyCard(Date.now())]);
+      setCards([...cards, emptyCard()]);
     }
   };
 
   const handleRemoveCard = (id: number) => {
-    setCards(cards.filter((card) => card.id !== id));
+    setCards(cards.filter(card => card.id !== id));
   };
 
   const handleCardChange = (id: number, field: keyof PaymentCardForm, value: string) => {
-    setCards(cards.map((card) =>
+    setCards(cards.map(card =>
       card.id === id ? { ...card, [field]: value } : card
     ));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Saving cards:', cards);
-    // make API call here
+  const fetchCards = () => {
+    return fetch('/api/retrieve-payment-cards', { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load payment cards');
+        return res.json();
+      })
+      .then((data: { cardId: number; cardNumber: string; expirationDate: string }[]) => {
+        setCards(data.map(c => ({
+          id: c.cardId,
+          cardId: c.cardId,
+          cardNumber: c.cardNumber ?? '',
+          nameOnCard: '',
+          expiryDate: c.expirationDate ?? '',
+          cvv: '',
+          isNew: false,
+        })));
+      });
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await Promise.all(
+        cards.map(card =>
+          fetch('/api/update-payment-cards', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cardId: card.cardId ?? null,
+              cardNumber: card.cardNumber.replace(/\s/g, ''),
+              expirationDate: card.expiryDate,
+            }),
+          })
+        )
+      );
+      // Re-fetch so new cards get their real DB cardIds — prevents duplicate inserts on next save
+      await fetchCards();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save cards:', err);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-full text-gray-500">
+      Loading payment cards...
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex items-center justify-center h-full text-red-500">
+      {error}
+    </div>
+  );
 
   return (
     <div>
@@ -137,7 +218,7 @@ export default function PaymentCards() {
             type="submit"
             className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Save Cards
+            {saved ? 'Saved ✓' : 'Save Cards'}
           </button>
         </div>
       </form>

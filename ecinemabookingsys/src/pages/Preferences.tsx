@@ -1,5 +1,4 @@
-import { Home, Bell, Calendar, TrendingUp, User, Settings as SettingsIcon, ChevronLeft, Pen, Lock, HelpCircle, Palette, Check } from 'lucide-react';
-import { Link } from 'react-router';
+import { Pen, Lock, Bell, HelpCircle, Palette } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { MovieCard } from '../components/MovieCard';
 import { Search } from 'lucide-react';
@@ -16,23 +15,44 @@ const settingsMenuItems = [
 ];
 
 export default function Preferences() {
-    const [activeSection, setActiveSection] = useState('edit-profile');
     const [formData, setFormData] = useState({
-        firstName: 'Allen',
-        lastName: 'Chiu',
-        email: 'asc73208@uga.edu',
-        address: 'testing address',
-        contactNumber: '678-862-6972',
-        city: 'Athens',
-        state: 'Georgia',
-        password: 'need to be hidden',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
     });
     const [movies, setMovies] = useState<Movie[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('Now Showing');
     const [selectedGenre, setSelectedGenre] = useState('All');
     const [loading, setLoading] = useState(true);
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [profileError, setProfileError] = useState<string | null>(null);
+    const [saved, setSaved] = useState(false);
 
+    // Fetch user profile
+    useEffect(() => {
+        fetch('/api/retrieve-edit-profile', { credentials: 'include' })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load profile');
+                return res.json();
+            })
+            .then(data => {
+                setFormData({
+                    firstName: data.firstName ?? '',
+                    lastName: data.lastName ?? '',
+                    email: data.email ?? '',
+                    phoneNumber: data.phoneNumber ?? '',
+                });
+                setProfileLoading(false);
+            })
+            .catch(err => {
+                setProfileError(err.message);
+                setProfileLoading(false);
+            });
+    }, []);
+
+    // Fetch movies
     useEffect(() => {
         fetch('/api/movies')
             .then(res => res.json())
@@ -75,14 +95,33 @@ export default function Preferences() {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission
-        alert('Profile updated successfully!');
+        const res = await fetch('/api/update-profile', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        });
+        if (res.ok) {
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        }
     };
 
     const handleCancel = () => {
-        // Reset form or navigate away
+        setProfileLoading(true);
+        fetch('/api/retrieve-edit-profile', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                setFormData({
+                    firstName: data.firstName ?? '',
+                    lastName: data.lastName ?? '',
+                    email: data.email ?? '',
+                    phoneNumber: data.phoneNumber ?? '',
+                });
+                setProfileLoading(false);
+            });
     };
 
     return (
