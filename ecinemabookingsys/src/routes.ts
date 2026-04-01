@@ -17,6 +17,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminHome from './pages/AdminHome';
 
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -41,7 +42,7 @@ export const router = createBrowserRouter([
               { path: 'edit-mailing-address', Component: EditMailingAddress },
               { path: 'payment-cards',        Component: PaymentCards },
               { path: 'security',             Component: ChangePassword },
-              { path: 'appearance',           Component: Preferences },
+              { path: 'appearance',           Component: Preferences},
             ],
           },
         ],

@@ -26,38 +26,13 @@ export default function Preferences() {
     const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('Now Showing');
     const [selectedGenre, setSelectedGenre] = useState('All');
     const [loading, setLoading] = useState(true);
-    const [profileLoading, setProfileLoading] = useState(true);
-    const [profileError, setProfileError] = useState<string | null>(null);
-    const [saved, setSaved] = useState(false);
-
-    // Fetch user profile
-    useEffect(() => {
-        fetch('/api/retrieve-edit-profile', { credentials: 'include' })
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to load profile');
-                return res.json();
-            })
-            .then(data => {
-                setFormData({
-                    firstName: data.firstName ?? '',
-                    lastName: data.lastName ?? '',
-                    email: data.email ?? '',
-                    phoneNumber: data.phoneNumber ?? '',
-                });
-                setProfileLoading(false);
-            })
-            .catch(err => {
-                setProfileError(err.message);
-                setProfileLoading(false);
-            });
-    }, []);
 
     // Fetch movies
     useEffect(() => {
-        fetch('/api/movies')
+        fetch('/api/retrieve-favorites', { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
-                const mapped = data.movies.map((m: any) => ({
+                const mapped = data.favorites.map((m: any) => ({
                     id: m.movie_id,
                     title: m.title,
                     genre: m.genre,
@@ -87,42 +62,6 @@ export default function Preferences() {
         const matchesGenre = selectedGenre === 'All' || movie.genre === selectedGenre;
         return matchesSearch && matchesStatus && matchesGenre;
     });
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const res = await fetch('/api/update-profile', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-        });
-        if (res.ok) {
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
-        }
-    };
-
-    const handleCancel = () => {
-        setProfileLoading(true);
-        fetch('/api/retrieve-edit-profile', { credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                setFormData({
-                    firstName: data.firstName ?? '',
-                    lastName: data.lastName ?? '',
-                    email: data.email ?? '',
-                    phoneNumber: data.phoneNumber ?? '',
-                });
-                setProfileLoading(false);
-            });
-    };
 
     return (
         <div className="flex h-screen bg-white">

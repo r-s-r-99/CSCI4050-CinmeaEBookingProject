@@ -10,11 +10,33 @@ interface MovieCardProps {
 export function MovieCard({ movie }: MovieCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
 
-  const handleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault(); // prevents the Link from navigating when clicking the heart
-    setIsFavorited(!isFavorited);
-    // make API call here
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const newState = !isFavorited;
+
+    try {
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          movieId: movie.id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update favorite');
+      }
+
+      setIsFavorited(newState); // only update UI if request succeeded
+    } catch (err) {
+      console.error(err);
+      // optionally show a toast/error message here
+    }
   };
+
 
   return (
     <Link to={`/movie/${movie.id}`} className="group">
@@ -48,11 +70,10 @@ export function MovieCard({ movie }: MovieCardProps) {
               className="transition-colors"
             >
               <Heart
-                className={`w-5 h-5 transition-colors ${
-                  isFavorited
-                    ? 'fill-red-500 text-red-500'
-                    : 'text-gray-400 hover:text-red-400'
-                }`}
+                className={`w-5 h-5 transition-colors ${isFavorited
+                  ? 'fill-red-500 text-red-500'
+                  : 'text-gray-400 hover:text-red-400'
+                  }`}
               />
             </button>
           </div>

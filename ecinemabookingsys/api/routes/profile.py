@@ -209,3 +209,63 @@ def update_profile_payment():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+        
+@profile_bp.route('/api/favorites', methods=['POST'])
+def toggle_favorite():
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    movie_id = data.get('movieId')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT favorite_id FROM Favorite
+                WHERE user_id = %s AND movie_id = %s
+            """, (user_id, movie_id))
+            existing = cursor.fetchone()
+
+            if existing:
+                cursor.execute("""
+                    DELETE FROM Favorite WHERE user_id = %s AND movie_id = %s
+                """, (user_id, movie_id))
+                action = 'removed'
+            else:
+                cursor.execute("""
+                    INSERT INTO Favorite (user_id, movie_id) VALUES (%s, %s)
+                """, (user_id, movie_id))
+                action = 'added'
+
+            conn.commit()
+            return jsonify({'action': action}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@profile_bp.route('/api/retrieve-favorites', methods=['GET'])
+def retrieve_favorites():
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.movie_id, m.title, m.poster_url, m.genre, m.rating, m.description, m.trailer_url, m.status, f.date_added
+                FROM Favorite f
+                JOIN Movie m ON f.movie_id = m.movie_id
+                WHERE f.user_id = %s
+                ORDER BY f.date_added DESC
+            """, (user_id,))
+            favorites = cursor.fetchall()
+            return jsonify({'favorites': favorites}), 200
+    except Exception as e:
+        print(f"Error: {e}")  # check your terminal for the actual message
+        return jsonify({'error': str(e)}), 500
+    
+
+
+        
