@@ -35,6 +35,17 @@ export default function Home() {
             });
     }, []);
 
+    const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set());
+
+    useEffect(() => {
+        fetch('/api/retrieve-favorites', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                const ids = new Set<number>(data.favorites.map((f: any) => f.movie_id as number));
+                setFavoritedIds(ids);
+            });
+    }, []);
+
     const genres = ['All', ...Array.from(new Set(movies.map(m => m.genre)))];
 
     const filteredMovies = movies.filter(movie => {
@@ -56,7 +67,7 @@ export default function Home() {
                     backgroundImage: 'url(https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1920&q=80)'
                 }}
             >
-                
+
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-white text-center">
                     <h1 className="text-5xl mb-4">Book Your Movie Experience</h1>
                     <p className="text-xl mb-8">Choose from the latest blockbusters and timeless classics</p>
@@ -92,8 +103,8 @@ export default function Home() {
                             key={status}
                             onClick={() => setSelectedStatus(status)}
                             className={`px-6 py-3 text-lg font-medium transition-colors border-b-2 -mb-px ${selectedStatus === status
-                                    ? 'border-red-600 text-red-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                ? 'border-red-600 text-red-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             {status}
@@ -109,7 +120,7 @@ export default function Home() {
                     ) : filteredMovies.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {filteredMovies.map(movie => (
-                                <MovieCard key={movie.id} movie={movie} />
+                                <MovieCard key={movie.id} movie={movie} isFavorited={favoritedIds.has(movie.id)} />
                             ))}
                         </div>
                     ) : (

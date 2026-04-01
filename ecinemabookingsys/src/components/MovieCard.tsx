@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Star, Heart } from 'lucide-react';
 import { Link } from 'react-router';
 import { Movie } from '../types';
 
 interface MovieCardProps {
   movie: Movie;
+  isFavorited?: boolean;
 }
 
-export function MovieCard({ movie }: MovieCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-
+export function MovieCard({ movie, isFavorited: initialFavorited = false }: MovieCardProps) {
+  const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
 

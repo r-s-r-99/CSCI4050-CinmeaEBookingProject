@@ -26,12 +26,15 @@ export default function Preferences() {
     const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('Now Showing');
     const [selectedGenre, setSelectedGenre] = useState('All');
     const [loading, setLoading] = useState(true);
+    const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set());
 
     // Fetch movies
     useEffect(() => {
         fetch('/api/retrieve-favorites', { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
+                const ids = new Set<number>(data.favorites.map((f: any) => f.movie_id as number));
+                setFavoritedIds(ids);
                 const mapped = data.favorites.map((m: any) => ({
                     id: m.movie_id,
                     title: m.title,
@@ -42,6 +45,7 @@ export default function Preferences() {
                     trailer_url: m.trailer_url,
                     status: m.status,
                 }));
+                
                 setMovies(mapped);
                 setLoading(false);
             })
@@ -101,7 +105,7 @@ export default function Preferences() {
                             ) : filteredMovies.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                     {filteredMovies.map(movie => (
-                                        <MovieCard key={movie.id} movie={movie} />
+                                        <MovieCard key={movie.id} movie={movie} isFavorited={favoritedIds.has(movie.id)} />
                                     ))}
                                 </div>
                             ) : (
