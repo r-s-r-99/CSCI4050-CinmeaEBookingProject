@@ -5,6 +5,14 @@ import secrets
 from datetime import datetime, timedelta
 from email_utils import send_confirmation_email
 
+from cryptography.fernet import Fernet
+import os
+
+fernet = Fernet(os.environ.get('ENCRYPTION_KEY').encode())
+
+def encrypt(value: str) -> str:
+    return fernet.encrypt(value.encode()).decode()
+
 register_bp = Blueprint('register', __name__)
 
 @register_bp.route('/api/register', methods=['POST'])
@@ -78,7 +86,7 @@ def registration():
                 cursor.execute("""
                     INSERT INTO PaymentCard (user_id, card_name, card_number, expiration_date, cvv)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, card_name, card_number, expiration_date, cvv))
+                """, (user_id, card_name, encrypt(card_number), expiration_date, encrypt(cvv)))
 
             # Generate confirmation token
             token = secrets.token_urlsafe(32)

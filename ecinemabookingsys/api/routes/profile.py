@@ -1,6 +1,17 @@
 from flask import Blueprint, request, jsonify, session
 from db import get_db
 
+from cryptography.fernet import Fernet
+import os
+
+fernet = Fernet(os.environ.get('ENCRYPTION_KEY').encode())
+
+def encrypt(value: str) -> str:
+    return fernet.encrypt(value.encode()).decode()
+
+def decrypt(value: str) -> str:
+    return fernet.decrypt(value.encode()).decode()
+
 profile_bp = Blueprint('profile', __name__)
 
 def get_user_id():
@@ -156,8 +167,8 @@ def get_profile_payment():
         return jsonify([{
             'cardId':         c['card_id'],
             'cardName':       c['card_name'],
-            'cardNumber':     c['card_number'],
-            'cvv':            c['cvv'],
+            'cardNumber':     decrypt(c['card_number']),
+            'cvv':            decrypt(c['cvv']),
             'expirationDate': str(c['expiration_date']),
         } for c in cards]), 200
 
@@ -197,14 +208,14 @@ def update_profile_payment():
                 cursor.execute("""
                     INSERT INTO PaymentCard (user_id, name, card_number, cvv, expiration_date)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, card_name, card_number, cvv, expiration_date))
+                """, (user_id, card_name, encrypt(card_number), encrypt(cvv), expiration_date))
             else:
                 # Existing card — update it
                 cursor.execute("""
                     UPDATE PaymentCard 
                     SET name = %s, card_number = %s, cvv = %s, expiration_date = %s 
                     WHERE card_id = %s AND user_id = %s
-                """, (card_name, card_number, cvv, expiration_date, card_id, user_id))
+                """, (card_name, encrypt(card_number), encrypt(cvv), expiration_date, card_id, user_id))
         conn.commit()
         return jsonify({'message': 'Payment card saved successfully'}), 200
 
