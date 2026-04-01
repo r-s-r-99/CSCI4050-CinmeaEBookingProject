@@ -78,6 +78,10 @@ export default function Register() {
     };
 
     const handleAddCard = () => {
+        if (paymentCards.length >= 3) {
+            setError('You can only add up to 3 payment cards.');
+            return;
+        }
         if (newCard.cardNumber && newCard.cardName && newCard.expiryDate && newCard.cvv) {
             setPaymentCards([
                 ...paymentCards,
@@ -86,12 +90,7 @@ export default function Register() {
                     ...newCard,
                 },
             ]);
-            setNewCard({
-                cardNumber: '',
-                cardName: '',
-                expiryDate: '',
-                cvv: '',
-            });
+            setNewCard({ cardNumber: '', cardName: '', expiryDate: '', cvv: '' });
             setShowCardForm(false);
         }
     };
@@ -171,7 +170,7 @@ export default function Register() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="firstName" className="block text-sm mb-2">
-                                    First Name <span className="text-red-500">*</span>
+                                    First Name <span className="text-red-500">(Required)</span>
                                 </label>
                                 <input
                                     type="text"
@@ -186,7 +185,7 @@ export default function Register() {
                             </div>
                             <div>
                                 <label htmlFor="lastName" className="block text-sm mb-2">
-                                    Last Name <span className="text-red-500">*</span>
+                                    Last Name <span className="text-red-500">(Required)</span>
                                 </label>
                                 <input
                                     type="text"
@@ -204,7 +203,7 @@ export default function Register() {
                         {/* Email */}
                         <div>
                             <label htmlFor="email" className="block text-sm mb-2">
-                                Email Address <span className="text-red-500">*</span>
+                                Email Address <span className="text-red-500">(Required)</span>
                             </label>
                             <input
                                 type="email"
@@ -221,7 +220,7 @@ export default function Register() {
                         {/* Phone Number */}
                         <div>
                             <label htmlFor="phoneNumber" className="block text-sm mb-2">
-                                Phone Number <span className="text-gray-400">(Optional)</span>
+                                Phone Number <span className="text-red-500">(Required)</span>
                             </label>
                             <input
                                 type="tel"
@@ -229,6 +228,7 @@ export default function Register() {
                                 name="phoneNumber"
                                 value={formData.phoneNumber}
                                 onChange={handleInputChange}
+                                required
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                                 placeholder="+1 (555) 123-4567"
                             />
@@ -284,7 +284,7 @@ export default function Register() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="password" className="block text-sm mb-2">
-                                    Password <span className="text-red-500">*</span>
+                                    Password <span className="text-red-500">(Required)</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -308,7 +308,7 @@ export default function Register() {
                             </div>
                             <div>
                                 <label htmlFor="confirmPassword" className="block text-sm mb-2">
-                                    Confirm Password <span className="text-red-500">*</span>
+                                    Confirm Password <span className="text-red-500">(Required)</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -364,7 +364,8 @@ export default function Register() {
                             )}
 
                             {/* Add Card Form */}
-                            {showCardForm ? (
+                            
+                            {paymentCards.length < 3 && showCardForm ? (
                                 <div className="border border-gray-300 rounded-lg p-4 space-y-3">
                                     <div>
                                         <input

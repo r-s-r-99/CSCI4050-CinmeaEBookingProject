@@ -147,15 +147,17 @@ def get_profile_payment():
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT card_id, card_number, expiration_date 
-                FROM PaymentCard 
+                SELECT card_id, card_name, card_number, cvv, expiration_date
+                FROM PaymentCard
                 WHERE user_id = %s
             """, (user_id,))
             cards = cursor.fetchall()
 
         return jsonify([{
             'cardId':         c['card_id'],
+            'cardName':       c['card_name'],
             'cardNumber':     c['card_number'],
+            'cvv':            c['cvv'],
             'expirationDate': str(c['expiration_date']),
         } for c in cards]), 200
 
@@ -173,8 +175,10 @@ def update_profile_payment():
 
     data = request.get_json()
     card_id         = data.get('cardId')   # None for brand-new cards
+    card_name       = data.get('cardName', '')
     card_number     = data.get('cardNumber', '').replace(' ', '')
     expiration_date = data.get('expirationDate')
+    cvv             = data.get('cvv', '')
 
     # Convert MM/YY → YYYY-MM-DD for MySQL DATE column
     if expiration_date and '/' in expiration_date:
@@ -191,16 +195,16 @@ def update_profile_payment():
                 if row['cnt'] >= 3:
                     return jsonify({'error': 'Maximum of 3 cards allowed.'}), 400
                 cursor.execute("""
-                    INSERT INTO PaymentCard (user_id, card_number, expiration_date)
-                    VALUES (%s, %s, %s)
-                """, (user_id, card_number, expiration_date))
+                    INSERT INTO PaymentCard (user_id, name, card_number, cvv, expiration_date)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (user_id, card_name, card_number, cvv, expiration_date))
             else:
                 # Existing card — update it
                 cursor.execute("""
                     UPDATE PaymentCard 
-                    SET card_number = %s, expiration_date = %s 
+                    SET name = %s, card_number = %s, cvv = %s, expiration_date = %s 
                     WHERE card_id = %s AND user_id = %s
-                """, (card_number, expiration_date, card_id, user_id))
+                """, (card_name, card_number, cvv, expiration_date, card_id, user_id))
         conn.commit()
         return jsonify({'message': 'Payment card saved successfully'}), 200
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Plus, Trash2 } from 'lucide-react';
+import { CreditCard, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface PaymentCardForm {
   id: number;       // local temp id for new cards; card_id from DB for existing
@@ -25,6 +25,21 @@ export default function PaymentCards() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showCvv, setShowCvv] = useState<{ [key: number]: boolean }>({});
+
+  const formatExpiry = (dateStr: string): string => {
+    // converts "2026-03-01" → "03/26"
+    const [year, month] = dateStr.split('-');
+    return `${month}/${year.slice(2)}`;
+  };
+
+  const formatCardNumber = (value: string): string => {
+    return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim().slice(0, 19);
+  };
+
+  const formatCVV = (value: string): string => {
+    return value.replace(/\D/g, '').slice(0, 4);
+  };
 
   useEffect(() => {
     fetch('/api/retrieve-payment-cards', { credentials: 'include' })
@@ -32,14 +47,14 @@ export default function PaymentCards() {
         if (!res.ok) throw new Error('Failed to load payment cards');
         return res.json();
       })
-      .then((data: { cardId: number; cardNumber: string; expirationDate: string }[]) => {
+      .then((data: { cardId: number; cardNumber: string; expirationDate: string, cardName: string; cvv: string }[]) => {
         setCards(data.map(c => ({
           id: c.cardId,
           cardId: c.cardId,
-          cardNumber: c.cardNumber ?? '',
-          nameOnCard: '',
-          expiryDate: c.expirationDate ?? '',
-          cvv: '',
+          cardNumber: c.cardNumber ? formatCardNumber(c.cardNumber) : '',
+          nameOnCard: c.cardName ?? '',
+          expiryDate: c.expirationDate ? formatExpiry(c.expirationDate) : '',
+          cvv: c.cvv ? formatCVV(c.cvv) : '',
           isNew: false,
         })));
         setLoading(false);
@@ -72,14 +87,14 @@ export default function PaymentCards() {
         if (!res.ok) throw new Error('Failed to load payment cards');
         return res.json();
       })
-      .then((data: { cardId: number; cardNumber: string; expirationDate: string }[]) => {
+      .then((data: { cardId: number; cardNumber: string; expirationDate: string, cardName: string; cvv: string }[]) => {
         setCards(data.map(c => ({
           id: c.cardId,
           cardId: c.cardId,
-          cardNumber: c.cardNumber ?? '',
-          nameOnCard: '',
-          expiryDate: c.expirationDate ?? '',
-          cvv: '',
+          cardNumber: c.cardNumber ? formatCardNumber(c.cardNumber) : '',
+          nameOnCard: c.cardName ?? '',
+          expiryDate: c.expirationDate ? formatExpiry(c.expirationDate) : '',
+          cvv: c.cvv ? formatCVV(c.cvv) : '',
           isNew: false,
         })));
       });
@@ -98,6 +113,8 @@ export default function PaymentCards() {
               cardId: card.cardId ?? null,
               cardNumber: card.cardNumber.replace(/\s/g, ''),
               expirationDate: card.expiryDate,
+              nameOnCard: card.nameOnCard,
+              cvv: card.cvv,
             }),
           })
         )
@@ -197,16 +214,28 @@ export default function PaymentCards() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-sm text-gray-600 mb-1">CVV / CVC</label>
                 <input
-                  type="password"
+                  type={showCvv[card.id] ? 'text' : 'password'}
                   value={card.cvv}
                   onChange={(e) => handleCardChange(card.id, 'cvv', e.target.value)}
                   placeholder="•••"
                   maxLength={4}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowCvv((prev) => ({
+                      ...prev,
+                      [card.id]: !prev[card.id],
+                    }))
+                  }
+                  className="absolute right-3 top-1/2 translate-y-[12%] text-gray-500 hover:text-gray-700"
+                >
+                  {showCvv[card.id] ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
           </div>

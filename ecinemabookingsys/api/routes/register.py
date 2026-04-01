@@ -16,9 +16,9 @@ def registration():
     password = data.get('password')
     first_name = data.get('firstName')
     last_name = data.get('lastName')
+    phone_number = data.get('phoneNumber', None)
 
     # Optional fields
-    phone_number = data.get('phoneNumber', None)
     promo_subscribed = data.get('promotions', False)
 
     # Optional mailing address
@@ -33,8 +33,8 @@ def registration():
     payment_cards = data.get('paymentCards', [])
 
     # Basic validation
-    if not all([email, password, first_name, last_name]):
-        return jsonify({ 'error': 'Email, password, first name and last name are required.' }), 400
+    if not all([email, password, phone_number, first_name, last_name]):
+        return jsonify({ 'error': 'Email, password, phone, first name and last name are required.' }), 400
 
     conn = get_db()
     try:
@@ -65,8 +65,9 @@ def registration():
             # Insert payment cards (max 3)
             for card in payment_cards[:3]:
                 card_number = card.get('cardNumber', '').replace(' ', '')  # strip spaces
+                card_name = card.get('cardName', '')
                 expiry = card.get('expiryDate', '')                        # MM/YY
-
+                cvv = card.get('cvv', '')
                 # Convert MM/YY to a DATE (YYYY-MM-DD) for MySQL
                 if expiry and '/' in expiry:
                     month, year = expiry.split('/')
@@ -75,9 +76,9 @@ def registration():
                     expiration_date = None
 
                 cursor.execute("""
-                    INSERT INTO PaymentCard (user_id, card_number, expiration_date)
-                    VALUES (%s, %s, %s)
-                """, (user_id, card_number, expiration_date))
+                    INSERT INTO PaymentCard (user_id, card_name, card_number, expiration_date, cvv)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (user_id, card_name, card_number, expiration_date, cvv))
 
             # Generate confirmation token
             token = secrets.token_urlsafe(32)
