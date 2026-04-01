@@ -16,7 +16,7 @@ export function Header() {
 
   // Check session on mount and route changes
   useEffect(() => {
-    fetch('http://localhost:5001/api/me', { credentials: 'include' })
+    fetch('/api/me', { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user_id) {
@@ -29,7 +29,7 @@ export function Header() {
   }, [location.pathname]);
 
   const handleLogout = async () => {
-    await fetch('http://localhost:5001/api/logout', { method: 'POST', credentials: 'include' });
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
     setAuth({ isLoggedIn: false });
     navigate('/login');
   };

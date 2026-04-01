@@ -25,6 +25,8 @@ export default function PaymentCards() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [removedCardIds, setRemovedCardIds] = useState<number[]>([]);
   const [showCvv, setShowCvv] = useState<{ [key: number]: boolean }>({});
 
   const formatExpiry = (dateStr: string): string => {
@@ -72,6 +74,11 @@ export default function PaymentCards() {
   };
 
   const handleRemoveCard = (id: number) => {
+    const card = cards.find(c => c.id === id);
+    // If it's a saved DB card, track its ID for deletion on next Save
+    if (card?.cardId) {
+      setRemovedCardIds(prev => [...prev, card.cardId!]);
+    }
     setCards(cards.filter(card => card.id !== id));
   };
 
@@ -81,30 +88,46 @@ export default function PaymentCards() {
     ));
   };
 
-  const fetchCards = () => {
-    return fetch('/api/retrieve-payment-cards', { credentials: 'include' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load payment cards');
-        return res.json();
-      })
-      .then((data: { cardId: number; cardNumber: string; expirationDate: string, cardName: string; cvv: string }[]) => {
-        setCards(data.map(c => ({
-          id: c.cardId,
-          cardId: c.cardId,
-          cardNumber: c.cardNumber ? formatCardNumber(c.cardNumber) : '',
-          nameOnCard: c.cardName ?? '',
-          expiryDate: c.expirationDate ? formatExpiry(c.expirationDate) : '',
-          cvv: c.cvv ? formatCVV(c.cvv) : '',
-          isNew: false,
-        })));
-      });
+  const fetchCards = async (): Promise<PaymentCardForm[]> => {
+    const res = await fetch('/api/retrieve-payment-cards', { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load payment cards');
+    const data: { cardId: number; cardNumber: string; expirationDate: string; cardName: string; cvv: string }[] = await res.json();
+    const mapped = data.map(c => ({
+      id: c.cardId,
+      cardId: c.cardId,
+      cardNumber: c.cardNumber ? formatCardNumber(c.cardNumber) : '',
+      nameOnCard: c.cardName ?? '',
+      expiryDate: c.expirationDate ? formatExpiry(c.expirationDate) : '',
+      cvv: c.cvv ? formatCVV(c.cvv) : '',
+      isNew: false,
+    }));
+    setCards(mapped);
+    return mapped;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     try {
+      const currentCards = cards;
+      const toDelete = removedCardIds;
+
+      // 1. Delete removed cards from DB
       await Promise.all(
-        cards.map(card =>
+        toDelete.map(cardId =>
+          fetch('/api/delete-payment-card', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cardId }),
+          })
+        )
+      );
+
+      // 2. Save remaining cards (INSERT new, UPDATE existing)
+      await Promise.all(
+        currentCards.map(card =>
           fetch('/api/update-payment-cards', {
             method: 'POST',
             credentials: 'include',
@@ -113,18 +136,22 @@ export default function PaymentCards() {
               cardId: card.cardId ?? null,
               cardNumber: card.cardNumber.replace(/\s/g, ''),
               expirationDate: card.expiryDate,
-              nameOnCard: card.nameOnCard,
+              cardName: card.nameOnCard,
               cvv: card.cvv,
             }),
           })
         )
       );
-      // Re-fetch so new cards get their real DB cardIds — prevents duplicate inserts on next save
+
+      // 3. Re-fetch to sync real DB state
+      setRemovedCardIds([]);
       await fetchCards();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save cards:', err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -245,9 +272,10 @@ export default function PaymentCards() {
         <div className="flex justify-end pt-4">
           <button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            disabled={isSaving}
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saved ? 'Saved ✓' : 'Save Cards'}
+            {isSaving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Cards'}
           </button>
         </div>
       </form>

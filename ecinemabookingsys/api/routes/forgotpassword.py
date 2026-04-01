@@ -30,8 +30,8 @@ def forgot_password():
 
         with conn.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO PasswordResetToken (user_id, token, expires_at)
-                VALUES (%s, %s, %s)
+                INSERT INTO PasswordResetToken (user_id, token, expires_at, type)
+                VALUES (%s, %s, %s, 'password_reset')
             """, (user['user_id'], token, expires_at))
             conn.commit()
 

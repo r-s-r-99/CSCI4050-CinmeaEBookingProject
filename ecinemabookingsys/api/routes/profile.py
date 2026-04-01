@@ -178,12 +178,21 @@ def get_profile_payment():
             """, (user_id,))
             cards = cursor.fetchall()
 
+        def safe_decrypt(value):
+            """Return decrypted string, or '' if value is None or not Fernet-encoded."""
+            if not value:
+                return ''
+            try:
+                return decrypt(value)
+            except Exception:
+                return ''
+
         return jsonify([{
             'cardId':         c['card_id'],
-            'cardName':       c['card_name'],
-            'cardNumber':     decrypt(c['card_number']),
-            'cvv':            decrypt(c['cvv']),
-            'expirationDate': str(c['expiration_date']),
+            'cardName':       c['card_name'] or '',
+            'cardNumber':     safe_decrypt(c['card_number']),
+            'cvv':            safe_decrypt(c['cvv']),
+            'expirationDate': str(c['expiration_date']) if c['expiration_date'] else '',
         } for c in cards]), 200
 
     except Exception as e:
@@ -220,22 +229,18 @@ def update_profile_payment():
                 if row['cnt'] >= 3:
                     return jsonify({'error': 'Maximum of 3 cards allowed.'}), 400
                 cursor.execute("""
-                    INSERT INTO PaymentCard (user_id, name, card_number, cvv, expiration_date)
+                    INSERT INTO PaymentCard (user_id, card_name, card_number, cvv, expiration_date)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (user_id, card_name, encrypt(card_number), encrypt(cvv), expiration_date))
             else:
                 # Existing card — update it
                 cursor.execute("""
                     UPDATE PaymentCard 
-                    SET name = %s, card_number = %s, cvv = %s, expiration_date = %s 
+                    SET card_name = %s, card_number = %s, cvv = %s, expiration_date = %s 
                     WHERE card_id = %s AND user_id = %s
                 """, (card_name, encrypt(card_number), encrypt(cvv), expiration_date, card_id, user_id))
         
-            conn.commit()
-            
-            user = get_user_email_and_name(cursor, user_id)
-            send_profile_update_email(user['email'], user['first_name'], 'payment cards')
-        
+        conn.commit()
         return jsonify({'message': 'Payment card saved successfully'}), 200
 
     except Exception as e:
@@ -243,7 +248,35 @@ def update_profile_payment():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
-        
+
+
+@profile_bp.route('/api/delete-payment-card', methods=['POST'])
+def delete_payment_card():
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    card_id = data.get('cardId')
+    if not card_id:
+        return jsonify({'error': 'cardId required'}), 400
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'DELETE FROM PaymentCard WHERE card_id = %s AND user_id = %s',
+                (card_id, user_id)
+            )
+        conn.commit()
+        return jsonify({'message': 'Card deleted'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @profile_bp.route('/api/favorites', methods=['POST'])
 def toggle_favorite():
     user_id = get_user_id()

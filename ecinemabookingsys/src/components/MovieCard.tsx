@@ -18,6 +18,7 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false }: Movi
     try {
       const res = await fetch('/api/favorites', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
