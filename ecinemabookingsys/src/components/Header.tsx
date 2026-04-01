@@ -1,4 +1,4 @@
-import { Film, Ticket, User, LogOut } from 'lucide-react';
+import { Film, Ticket, User, LogOut, ShieldCheck } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 
@@ -60,6 +60,20 @@ export function Header() {
               <Ticket className="w-5 h-5" />
               <span>My Bookings</span>
             </Link>
+
+            {auth.isLoggedIn && auth.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
+                  isActive('/admin')
+                    ? 'bg-purple-600 border-purple-500 text-white'
+                    : 'border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Admin Panel</span>
+              </Link>
+            )}
 
             {auth.isLoggedIn && (
               <Link
