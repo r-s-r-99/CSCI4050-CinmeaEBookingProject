@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from db import get_db
-
+import bcrypt
+from email_utils import send_profile_update_email
 from cryptography.fernet import Fernet
 import os
 
@@ -11,6 +12,10 @@ def encrypt(value: str) -> str:
 
 def decrypt(value: str) -> str:
     return fernet.decrypt(value.encode()).decode()
+
+def get_user_email_and_name(cursor, user_id):
+    cursor.execute("SELECT email, first_name FROM User WHERE user_id = %s", (user_id,))
+    return cursor.fetchone()
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -61,16 +66,21 @@ def update_profile_main():
     first_name   = data.get('firstName')
     last_name    = data.get('lastName')
     phone_number = data.get('phoneNumber')
+    promo_subscribed = data.get('promotions')
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE User 
-                SET first_name = %s, last_name = %s, phone_number = %s 
+                SET first_name = %s, last_name = %s, phone_number = %s, promo_subscribed = %s
                 WHERE user_id = %s
-            """, (first_name, last_name, phone_number, user_id))
-        conn.commit()
+            """, (first_name, last_name, phone_number, promo_subscribed, user_id))
+            conn.commit()
+        
+            user = get_user_email_and_name(cursor, user_id)
+            send_profile_update_email(user['email'], user['first_name'], 'personal information')
+            
         return jsonify({'message': 'Profile updated successfully'}), 200
 
     except Exception as e:
@@ -138,7 +148,11 @@ def update_profile_address():
                     VALUES (%s, %s, %s, %s, %s)
                 """, (user_id, data.get('houseNumber'), data.get('street'), data.get('apt'), data.get('zipCode')))
 
-        conn.commit()
+            conn.commit()
+            
+            user = get_user_email_and_name(cursor, user_id)
+            send_profile_update_email(user['email'], user['first_name'], 'mailing address')
+            
         return jsonify({'message': 'Address updated successfully'}), 200
 
     except Exception as e:
@@ -216,7 +230,12 @@ def update_profile_payment():
                     SET name = %s, card_number = %s, cvv = %s, expiration_date = %s 
                     WHERE card_id = %s AND user_id = %s
                 """, (card_name, encrypt(card_number), encrypt(cvv), expiration_date, card_id, user_id))
-        conn.commit()
+        
+            conn.commit()
+            
+            user = get_user_email_and_name(cursor, user_id)
+            send_profile_update_email(user['email'], user['first_name'], 'payment cards')
+        
         return jsonify({'message': 'Payment card saved successfully'}), 200
 
     except Exception as e:
@@ -281,6 +300,57 @@ def retrieve_favorites():
         print(f"Error: {e}")  # check your terminal for the actual message
         return jsonify({'error': str(e)}), 500
     
+@profile_bp.route('/api/verify-password', methods=['POST'])
+def verify_password():
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    current_password = data.get('password')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT password FROM User WHERE user_id = %s", (user_id,))
+            user = cursor.fetchone()
+
+        if not user or not bcrypt.checkpw(current_password.encode('utf-8'), user['password'].encode('utf-8')):
+            return jsonify({'valid': False}), 200
+
+        return jsonify({'valid': True}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@profile_bp.route('/api/change-password', methods=['POST'])
+def change_password():
+    user_id = get_user_id()
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    new_password = data.get('password')
+
+    conn = get_db()
+    try:
+        hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE User SET password = %s WHERE user_id = %s", (hashed, user_id))
+            conn.commit()
+            
+            user = get_user_email_and_name(cursor, user_id)
+            send_profile_update_email(user['email'], user['first_name'], 'password')
+            
+        return jsonify({'message': 'Password changed successfully.'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 
         

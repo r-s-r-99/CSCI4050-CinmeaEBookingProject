@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Film, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
@@ -7,6 +7,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const confirmed = searchParams.get('confirmed');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -136,6 +138,13 @@ export default function Login() {
                 Forgot password?
               </Link>
             </div>
+
+            {confirmed && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
+                Email confirmed! You can now log in.
+              </div>
+            )}
+
 
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">

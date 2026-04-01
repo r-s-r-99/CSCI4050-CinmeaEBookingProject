@@ -11,6 +11,7 @@ SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 SMTP_USER = os.getenv('SMTP_USER')       # your gmail
 SMTP_PASS = os.getenv('SMTP_PASS')       # your app password
 BASE_URL  = os.getenv('BASE_URL', 'http://localhost:5000')
+FLASK_URL = os.getenv('FLASK_URL', 'http://localhost:5001')
 
 def send_confirmation_email(to_email: str, first_name: str, token: str):
     confirm_url = f"{BASE_URL}/api/confirm-email/{token}"
@@ -63,6 +64,28 @@ def send_reset_email(to_email: str, first_name: str, token: str):
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = 'Reset your CineBook password'
+    msg['From'] = SMTP_USER
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html'))
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        
+def send_profile_update_email(to_email: str, first_name: str, updated_section: str):
+    html = f"""
+    <html>
+      <body>
+        <h2>Profile Updated</h2>
+        <p>Hi {first_name}, your <strong>{updated_section}</strong> has been updated on your CineBook account.</p>
+        <p>If you did not make this change, please reset your password immediately or contact support.</p>
+      </body>
+    </html>
+    """
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Your CineBook profile was updated'
     msg['From'] = SMTP_USER
     msg['To'] = to_email
     msg.attach(MIMEText(html, 'html'))

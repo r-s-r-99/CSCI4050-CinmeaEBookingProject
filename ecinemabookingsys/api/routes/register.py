@@ -4,6 +4,7 @@ import bcrypt
 import secrets
 from datetime import datetime, timedelta
 from email_utils import send_confirmation_email
+from flask import redirect
 
 from cryptography.fernet import Fernet
 import os
@@ -115,7 +116,6 @@ def confirm_email(token):
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # Find the token
             cursor.execute("""
                 SELECT user_id, expires_at, used 
                 FROM PasswordResetToken 
@@ -124,21 +124,19 @@ def confirm_email(token):
             record = cursor.fetchone()
 
             if not record:
-                return jsonify({ 'error': 'Invalid confirmation link.' }), 404
+                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=invalid_token")
 
             if record['used']:
-                return jsonify({ 'error': 'Link already used.' }), 400
+                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=link_used")
 
             if datetime.utcnow() > record['expires_at']:
-                return jsonify({ 'error': 'Confirmation link has expired.' }), 400
+                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=link_expired")
 
-            # Activate the account
             cursor.execute("""
                 UPDATE User SET account_status = 'Active' 
                 WHERE user_id = %s
             """, (record['user_id'],))
 
-            # Mark token as used
             cursor.execute("""
                 UPDATE PasswordResetToken SET used = TRUE 
                 WHERE token = %s
@@ -146,11 +144,10 @@ def confirm_email(token):
 
             conn.commit()
 
-            # Redirect to login page
-            return jsonify({ 'message': 'Account activated! You can now log in.' }), 200
+            return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?confirmed=true")
 
     except Exception as e:
         conn.rollback()
-        return jsonify({ 'error': str(e) }), 500
+        return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=server_error")
     finally:
         conn.close()
