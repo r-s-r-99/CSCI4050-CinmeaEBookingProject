@@ -17,7 +17,7 @@ def get_profile_main():
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT first_name, last_name, email, phone_number 
+                SELECT first_name, last_name, email, phone_number, promo_subscribed
                 FROM User 
                 WHERE user_id = %s
             """, (user_id,))
@@ -31,6 +31,7 @@ def get_profile_main():
             'lastName':    profile['last_name'],
             'email':       profile['email'],
             'phoneNumber': profile['phone_number'],
+            'promotions':  profile['promo_subscribed'],
         }), 200
 
     except Exception as e:

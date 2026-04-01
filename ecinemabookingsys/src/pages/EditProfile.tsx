@@ -7,6 +7,7 @@ export default function EditProfile() {
     lastName: '',
     email: '',
     phoneNumber: '',
+    promotions: false,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +25,7 @@ export default function EditProfile() {
           lastName: data.lastName ?? '',
           email: data.email ?? '',
           phoneNumber: data.phoneNumber ?? '',
+          promotions: data.promotions ?? false,
         });
         setLoading(false);
       })
@@ -33,8 +35,12 @@ export default function EditProfile() {
       });
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,6 +68,7 @@ export default function EditProfile() {
           lastName: data.lastName ?? '',
           email: data.email ?? '',
           phoneNumber: data.phoneNumber ?? '',
+          promotions: data.promotions ?? false,
         });
         setLoading(false);
       });
@@ -137,6 +144,22 @@ export default function EditProfile() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
+            </div>
+
+            {/* Promotions Checkbox */}
+            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="promotions"
+                name="promotions"
+                checked={formData.promotions}
+                onChange={handleInputChange}
+                className="w-5 h-5 text-red-600 rounded focus:ring-red-500 mt-0.5"
+              />
+              <label htmlFor="promotions" className="text-sm text-gray-700 cursor-pointer">
+                I want to receive promotional emails about upcoming movies, special offers,
+                and exclusive cinema events. You can unsubscribe at any time.
+              </label>
             </div>
 
             <div className="flex gap-4 pt-6">
