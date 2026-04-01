@@ -11,6 +11,7 @@ from routes.showtimes import showtimes_bp
 from routes.register import register_bp  
 from routes.login import login_bp
 from routes.profile import profile_bp
+from routes.forgotpassword import forgotpassword_bp
 from db import get_db
 
 app = Flask(__name__)
@@ -32,6 +33,7 @@ app.register_blueprint(showtimes_bp)
 app.register_blueprint(register_bp)
 app.register_blueprint(login_bp)
 app.register_blueprint(profile_bp)
+app.register_blueprint(forgotpassword_bp)
 
 @app.route('/api/debug-session')
 def debug_session():

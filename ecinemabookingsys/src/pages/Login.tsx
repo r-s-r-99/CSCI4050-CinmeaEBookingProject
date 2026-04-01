@@ -129,12 +129,12 @@ export default function Login() {
                 />
                 <span className="text-sm text-gray-600">Remember me</span>
               </label>
-              <button
-                type="button"
+              <Link
+                to="/forgot-password"
                 className="text-sm text-red-600 hover:text-red-700"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             {error && (

@@ -16,6 +16,8 @@ import Preferences from './pages/Preferences';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminHome from './pages/AdminHome';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 
 export const router = createBrowserRouter([
@@ -31,6 +33,8 @@ export const router = createBrowserRouter([
       { path: 'login', Component: Login },
       { path: 'register', Component: Register },
       { path: 'admin', Component: AdminHome },
+      { path: 'forgot-password', Component: ForgotPassword },
+      { path: 'reset-password', Component: ResetPassword },
       {
         path: 'settings',
         Component: ProtectedRoute,   

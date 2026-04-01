@@ -41,3 +41,33 @@ def send_confirmation_email(to_email: str, first_name: str, token: str):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASS)
         server.sendmail(SMTP_USER, to_email, msg.as_string())
+        
+def send_reset_email(to_email: str, first_name: str, token: str):
+    reset_url = f"{BASE_URL}/reset-password?token={token}"
+
+    html = f"""
+    <html>
+      <body>
+        <h2>Reset your CineBook password</h2>
+        <p>Hi {first_name}, we received a request to reset your password.</p>
+        <a href="{reset_url}" 
+           style="background-color:#dc2626;color:white;padding:12px 24px;
+                  text-decoration:none;border-radius:8px;display:inline-block;">
+          Reset Password
+        </a>
+        <p>This link expires in 1 hour.</p>
+        <p>If you did not request a password reset, ignore this email.</p>
+      </body>
+    </html>
+    """
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Reset your CineBook password'
+    msg['From'] = SMTP_USER
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html'))
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
