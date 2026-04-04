@@ -26,7 +26,6 @@ export default function PaymentCards() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [removedCardIds, setRemovedCardIds] = useState<number[]>([]);
   const [showCvv, setShowCvv] = useState<{ [key: number]: boolean }>({});
 
   const formatExpiry = (dateStr: string): string => {
@@ -40,7 +39,7 @@ export default function PaymentCards() {
   };
 
   const formatCVV = (value: string): string => {
-    return value.replace(/\D/g, '').slice(0, 4);
+    return value.replace(/\D/g, '').slice(0, 4).trim();
   };
 
   useEffect(() => {
@@ -73,16 +72,44 @@ export default function PaymentCards() {
     }
   };
 
-  const handleRemoveCard = (id: number) => {
+  const handleRemoveCard = async (id: number) => {
     const card = cards.find(c => c.id === id);
-    // If it's a saved DB card, track its ID for deletion on next Save
+
     if (card?.cardId) {
-      setRemovedCardIds(prev => [...prev, card.cardId!]);
+      try {
+        await fetch('/api/delete-payment-card', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardId: card.cardId }),
+        });
+      } catch (err) {
+        console.error('Failed to delete card:', err);
+        return;
+      }
     }
-    setCards(cards.filter(card => card.id !== id));
+
+    setCards(cards.filter(c => c.id !== id));
   };
 
   const handleCardChange = (id: number, field: keyof PaymentCardForm, value: string) => {
+    if (field === 'cardNumber') {
+      value = value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
+      if (value.length > 19) value = value.slice(0, 19);
+    }
+
+    if (field === 'expiryDate') {
+      value = value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2, 4);
+      }
+      if (value.length > 5) value = value.slice(0, 5);
+    }
+
+    if (field === 'cvv') {
+      value = value.replace(/\D/g, '').slice(0, 4);
+    }
+
     setCards(cards.map(card =>
       card.id === id ? { ...card, [field]: value } : card
     ));
@@ -111,19 +138,6 @@ export default function PaymentCards() {
     setIsSaving(true);
     try {
       const currentCards = cards;
-      const toDelete = removedCardIds;
-
-      // 1. Delete removed cards from DB
-      await Promise.all(
-        toDelete.map(cardId =>
-          fetch('/api/delete-payment-card', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cardId }),
-          })
-        )
-      );
 
       // 2. Save remaining cards (INSERT new, UPDATE existing)
       await Promise.all(
@@ -144,7 +158,6 @@ export default function PaymentCards() {
       );
 
       // 3. Re-fetch to sync real DB state
-      setRemovedCardIds([]);
       await fetchCards();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
