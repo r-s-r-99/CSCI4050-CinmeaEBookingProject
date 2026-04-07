@@ -1,17 +1,8 @@
 from models.user import User
-import bcrypt
+from models.payment_card import PaymentCard
+from models.favorite import Favorite
 
 class Customer(User):
-    def __init__(self, user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status):
-        super().__init__(user_id)
-        self.email = email
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone_number = phone_number
-        self.role = role
-        self.promo_subscribed = promo_subscribed
-        self.account_status = account_status
-
     def to_dict(self):
         return {
             'userId':        self.user_id,
@@ -31,7 +22,7 @@ class Customer(User):
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status
-                    FROM User WHERE user_id = %s
+                    FROM User WHERE user_id = %s AND role = 'customer'
                 """, (user_id,))
                 row = cursor.fetchone()
             return cls(**row) if row else None
@@ -39,35 +30,22 @@ class Customer(User):
             conn.close()
 
     @classmethod
-    def find_by_email(cls, email):
-        conn = cls.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status
-                    FROM User WHERE email = %s
-                """, (email,))
-                row = cursor.fetchone()
-            return cls(**row) if row else None
-        finally:
-            conn.close()    
-
-    @classmethod
     def create(cls, email, password, first_name, last_name, phone_number, promo_subscribed):
+        import bcrypt
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         conn = cls.get_db()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    INSERT INTO User (email, password, first_name, last_name, phone_number, promo_subscribed, account_status)
-                    VALUES (%s, %s, %s, %s, %s, %s, 'Inactive')
+                    INSERT INTO User (email, password, first_name, last_name, phone_number, promo_subscribed, account_status, role)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Inactive', 'customer')
                 """, (email, hashed, first_name, last_name, phone_number, promo_subscribed))
                 conn.commit()
                 return cursor.lastrowid
         finally:
             conn.close()
 
-    def update_profile(self, first_name, last_name, phone_number, promo_subscribed):
+    def update_profile(self, first_name, last_name, phone_number, promo_subscribed=None):
         conn = self.get_db()
         try:
             with conn.cursor() as cursor:
@@ -79,31 +57,8 @@ class Customer(User):
         finally:
             conn.close()
 
-    def update_password(self, new_password):
-        hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        conn = self.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("UPDATE User SET password = %s WHERE user_id = %s", (hashed, self.user_id))
-                conn.commit()
-        finally:
-            conn.close()
+    def get_favorites(self):
+        return Favorite.get_by_user(self.user_id)
 
-    def check_password(self, password):
-        conn = self.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT password FROM User WHERE user_id = %s", (self.user_id,))
-                row = cursor.fetchone()
-            return bcrypt.checkpw(password.encode('utf-8'), row['password'].encode('utf-8'))
-        finally:
-            conn.close()
-
-    def activate(self):
-        conn = self.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("UPDATE User SET account_status = 'Active' WHERE user_id = %s", (self.user_id,))
-                conn.commit()
-        finally:
-            conn.close()
+    def get_payment_cards(self):
+        return PaymentCard.get_by_user(self.user_id)
