@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from models.users import User
+from models.customer import User
 from models.payment_card import PaymentCard
 from models.favorite import Favorite
 from models.mailing_address import MailingAddress

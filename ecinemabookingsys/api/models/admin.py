@@ -1,9 +1,9 @@
-from models.base import BaseModel
+from models.user import User
 import bcrypt
 
-class User(BaseModel):
+class Admin(User):
     def __init__(self, user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status):
-        self.user_id = user_id
+        super().__init__(user_id)
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
