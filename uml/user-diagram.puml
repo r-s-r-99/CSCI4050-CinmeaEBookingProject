@@ -1,0 +1,166 @@
+@startuml 
+class User {
+    - userId : int 
+    - password : String 
+    + login(userId, password) : void 
+    + logout() : void 
+    + editProfile() : void 
+    + changePassword(password) : void 
+} 
+class Customer { 
+    - firstName : String 
+    - lastName : String 
+    - email : String 
+    - phoneNumber : String 
+    - cardsSaved : PaymentCard[] 
+    - accountStatus : AccountStatus 
+    - mailingAddress : MailingAddress 
+    + makeBooking(Showtime) : void
+    + addPaymentCard(PaymentCards) : void 
+    + removePaymentCard(PaymentCards) : void
+    + addMailingAddress(houseNumber, street, aptNum, zip) : void 
+    + subscribeToPromotions() : void 
+    + unsubscribeToPromotions() : void 
+    + bookingHistory() : Booking[]
+    + returnBooking(Booking) : void
+} 
+class PaymentCard { 
+    - cardNumber: String 
+    - expirationDate: Date 
+    - billingAddress: MailingAddress 
+} 
+class MailingAddress { 
+    - houseNumber: int 
+    - street: String 
+    - aptNum: int 
+    - zip: String 
+} 
+enum AccountStatus { 
+    Active
+    Suspended 
+    Inactive 
+} 
+class Movie { 
+    - movieId : int 
+    - title : String 
+    - movieRating : Rating 
+    - category : Genre 
+    - description : String 
+    - trailerLink : String 
+    - showStatus : Status
+} 
+enum Status { 
+    nowShowing 
+    comingSoon 
+} 
+enum Rating { 
+    G 
+    PG 
+    PG-13 
+    R 
+} 
+enum Genre { 
+    Comedy 
+    Horror 
+    Action 
+    Adventure 
+    Animated 
+    Drama 
+    Fantasy 
+    Historical 
+    Science Fiction 
+    Thriller 
+    Western 
+} 
+class Admin { 
+    - name : String 
+    - email : String
+    + createMovie(title, movieRating, category, description, trailerLink, showStatus) : void
+    + deleteMovie(Movie) : void
+    + updateMovie(Movie) : void
+    + createPromotion(code, discountAmount) : void
+    + discontinuePromotion(code) : void 
+    + setTicketPrice(TicketType, price) : void
+} 
+class Ticket { 
+    - ticketType : TicketType 
+    - seatNumber : Seat 
+    - ticketPrice : double 
+    + getTicketPrice(ticketType) : double 
+} 
+enum TicketType { 
+    Child 
+    Adult 
+    Senior 
+} 
+class Showtime { 
+    - showId : int 
+    - date : Date 
+    - timeOfShowing : Time 
+    - room : Showroom 
+    - movie : Movie 
+    - ticketsAvailable : int 
+} 
+class Showroom { 
+    - roomNumber : int 
+    - numberOfSeats : int 
+} 
+class Seat { 
+    - seatId : int
+    - seatNumber : String 
+    - showroom : Showroom 
+} 
+class MovieTheater { 
+    showrooms : Showroom[] 
+} 
+class Cinema { 
+    theater : MovieTheater 
+} 
+class Booking { 
+    - bookingId : int
+    - tickets : Ticket[] 
+    - totalPrice : double 
+    - card : PaymentCard 
+    + calculateTotal(Ticket[]) : double 
+    - applyPromotion(Promotion) : void 
+} 
+class Promotion { 
+    - code : String 
+    - discountPercentage : double 
+    - startDate : Date 
+    - endDate : Date 
+} 
+class Preference {
+    - dateAdded : Date
+    - preferenceScore: int
+}
+class Recommendation {
+    - recommendationDate : Date
+    - score : double
+}
+Customer "1" -- "1" AccountStatus 
+Ticket "1" -- "1" TicketType 
+Movie "*" -- "1" Genre 
+Movie "*" -- "1" Rating 
+Movie "*" -- "1" Status 
+User <|-- Customer
+User <|-- Admin
+Customer "1" *-- "0..3" PaymentCard : stores
+Customer "1" *-- "0..1" MailingAddress : livesAt
+Booking "1" *-- "1..*" Ticket : contains
+Showroom "1" *-- "1..*" Seat : has
+Customer "1" -- "0..*" Booking : makes
+Customer "1" -- "0..*" Movie : favorites
+Booking "1" --> "1" Showtime : for
+Booking "1" --> "1" PaymentCard : paidWith
+Booking "1" --> "0..1" Promotion : applies
+Showtime "1" -- "1..*" Seat : hasSeats
+Showtime "1" --> "1" Movie : screens
+Showtime "1" --> "1" Showroom : scheduledIn
+MovieTheater "1" *-- "1..*" Showroom : contains
+Cinema "1" *-- "1" MovieTheater : contains
+Customer "1" -- "0..*" Preference : hasPreferences
+Customer "1" -- "0..*" Recommendation : recommends
+Preference "0..*" -- "1" Movie : refersTo
+Recommendation "0..*" -- "1" Movie : recommends
+@enduml
