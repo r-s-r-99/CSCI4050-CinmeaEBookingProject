@@ -12,20 +12,6 @@ class Admin(User):
             'accountStatus': self.account_status,
         }
 
-    @classmethod
-    def find_by_id(cls, user_id):
-        conn = cls.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status
-                    FROM User WHERE user_id = %s AND role = 'admin'
-                """, (user_id,))
-                row = cursor.fetchone()
-            return cls(**row) if row else None
-        finally:
-            conn.close()
-
     def get_all_users(self):
         conn = self.get_db()
         try:

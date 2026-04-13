@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session
-from models.customer import User
+from models.user import User
+from models.customer import Customer
 from models.payment_card import PaymentCard
 from models.favorite import Favorite
 from models.mailing_address import MailingAddress
@@ -217,12 +218,12 @@ def change_password():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json()
-    user = User.find_by_id(user_id)
+    user = Customer.find_by_id(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
     try:
-        user.update_password(data.get('password'))
+        user.change_password(data.get('password'), first_name=user.first_name)
         send_profile_update_email(user.email, user.first_name, 'password')
         return jsonify({'message': 'Password changed successfully.'}), 200
     except Exception as e:
