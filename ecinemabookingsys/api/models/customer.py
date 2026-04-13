@@ -1,6 +1,7 @@
 from models.user import User
 from models.payment_card import PaymentCard
 from models.favorite import Favorite
+import bcrypt
 
 class Customer(User):
     def to_dict(self):
@@ -16,22 +17,7 @@ class Customer(User):
         }
 
     @classmethod
-    def find_by_id(cls, user_id):
-        conn = cls.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT user_id, email, first_name, last_name, phone_number, role, promo_subscribed, account_status
-                    FROM User WHERE user_id = %s AND role = 'customer'
-                """, (user_id,))
-                row = cursor.fetchone()
-            return cls(**row) if row else None
-        finally:
-            conn.close()
-
-    @classmethod
     def create(cls, email, password, first_name, last_name, phone_number, promo_subscribed):
-        import bcrypt
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         conn = cls.get_db()
         try:
