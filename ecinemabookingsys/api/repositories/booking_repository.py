@@ -27,6 +27,7 @@ class BookingRepository(CRUDRepository):
         """
         # Import here to avoid circular imports
         from models.booking import Booking
+        from models.ticket import Ticket
 
         query = """
             SELECT b.booking_id, b.user_id, b.showtime_id, b.total_price, b.booking_date,
@@ -75,13 +76,13 @@ class BookingRepository(CRUDRepository):
             },
         )
 
-        # Fetch and attach tickets
+        # Fetch and attach tickets as Ticket objects
         ticket_query = """
-            SELECT ticket_id, seat_id, ticket_type, show_date, ticket_price
+            SELECT ticket_id, booking_id, seat_id, ticket_type, show_date, ticket_price
             FROM Ticket WHERE booking_id = %s
         """
         tickets = self.execute_query(ticket_query, (booking_id,))
-        booking.tickets = [dict(t) for t in tickets]
+        booking.tickets = [Ticket(**dict(t)) for t in tickets]
 
         return booking
 
@@ -92,6 +93,7 @@ class BookingRepository(CRUDRepository):
         Returns: List of Booking objects with all composed data
         """
         from models.booking import Booking
+        from models.ticket import Ticket
 
         query = """
             SELECT b.booking_id, b.user_id, b.showtime_id, b.total_price, b.booking_date,
@@ -140,13 +142,13 @@ class BookingRepository(CRUDRepository):
                 },
             )
 
-            # Attach tickets for this booking
+            # Attach tickets as Ticket objects for this booking
             ticket_query = """
-                SELECT ticket_id, seat_id, ticket_type, show_date, ticket_price
+                SELECT ticket_id, booking_id, seat_id, ticket_type, show_date, ticket_price
                 FROM Ticket WHERE booking_id = %s
             """
             tickets = self.execute_query(ticket_query, (row["booking_id"],))
-            booking.tickets = [dict(t) for t in tickets]
+            booking.tickets = [Ticket(**dict(t)) for t in tickets]
 
             bookings.append(booking)
 
@@ -232,9 +234,11 @@ class TicketRepository(CRUDRepository):
 
     def find_by_id(self, ticket_id):
         """Find ticket by ID."""
+        from models.ticket import Ticket
+
         query = "SELECT * FROM Ticket WHERE ticket_id = %s"
         row = self.execute_query_one(query, (ticket_id,))
-        return dict(row) if row else None
+        return Ticket(**row) if row else None
 
     def save(self, ticket):
         """Save ticket (insert or update)."""
@@ -248,12 +252,12 @@ class TicketRepository(CRUDRepository):
             self.execute_update(
                 query,
                 (
-                    ticket.get("booking_id"),
-                    ticket.get("seat_id"),
-                    ticket.get("ticket_type"),
-                    ticket.get("show_date"),
-                    ticket.get("ticket_price"),
-                    ticket["ticket_id"],
+                    ticket.booking_id,
+                    ticket.seat_id,
+                    ticket.ticket_type,
+                    ticket.show_date,
+                    ticket.ticket_price,
+                    ticket.ticket_id,
                 ),
             )
         else:
@@ -265,19 +269,19 @@ class TicketRepository(CRUDRepository):
             ticket_id = self.execute_insert_get_id(
                 query,
                 (
-                    ticket.get("booking_id"),
-                    ticket.get("seat_id"),
-                    ticket.get("ticket_type"),
-                    ticket.get("show_date"),
-                    ticket.get("ticket_price"),
+                    ticket.booking_id,
+                    ticket.seat_id,
+                    ticket.ticket_type,
+                    ticket.show_date,
+                    ticket.ticket_price,
                 ),
             )
-            ticket["ticket_id"] = ticket_id
+            ticket.ticket_id = ticket_id
 
         return ticket
 
     def create_batch(self, tickets_data):
-        """Create multiple tickets at once."""
+        """Create multiple tickets at once. Accepts both Ticket objects and dicts."""
         query = """
             INSERT INTO Ticket (booking_id, seat_id, ticket_type, show_date, ticket_price)
             VALUES (%s, %s, %s, %s, %s)
@@ -287,15 +291,25 @@ class TicketRepository(CRUDRepository):
         try:
             with conn.cursor() as cursor:
                 for ticket_data in tickets_data:
+                    # Handle both Ticket objects and dicts
+                    if isinstance(ticket_data, dict):
+                        # Dict format
+                        booking_id = ticket_data.get("booking_id")
+                        seat_id = ticket_data.get("seat_id")
+                        ticket_type = ticket_data.get("ticket_type")
+                        show_date = ticket_data.get("show_date")
+                        ticket_price = ticket_data.get("ticket_price")
+                    else:
+                        # Ticket object format
+                        booking_id = ticket_data.booking_id
+                        seat_id = ticket_data.seat_id
+                        ticket_type = ticket_data.ticket_type
+                        show_date = ticket_data.show_date
+                        ticket_price = ticket_data.ticket_price
+
                     cursor.execute(
                         query,
-                        (
-                            ticket_data.get("booking_id"),
-                            ticket_data.get("seat_id"),
-                            ticket_data.get("ticket_type"),
-                            ticket_data.get("show_date"),
-                            ticket_data.get("ticket_price"),
-                        ),
+                        (booking_id, seat_id, ticket_type, show_date, ticket_price),
                     )
                 conn.commit()
             return True
@@ -304,12 +318,17 @@ class TicketRepository(CRUDRepository):
 
     def delete(self, ticket):
         """Delete ticket."""
+        # Handle both Ticket objects and dicts
+        ticket_id = ticket.ticket_id if hasattr(ticket, 'ticket_id') else ticket["ticket_id"]
         query = "DELETE FROM Ticket WHERE ticket_id = %s"
-        self.execute_update(query, (ticket["ticket_id"],))
+        self.execute_update(query, (ticket_id,))
         return True
 
     def get_all(self):
         """Get all tickets."""
+        from models.ticket import Ticket
+
         query = "SELECT * FROM Ticket"
         rows = self.execute_query(query)
-        return [dict(row) for row in rows]
+        return [Ticket(**dict(row)) for row in rows]
+
