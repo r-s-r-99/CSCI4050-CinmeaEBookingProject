@@ -128,7 +128,7 @@ export default function MovieDetail() {
                 {times.map(showtime => (
                   <button
                     key={showtime.id}
-                    onClick={() => navigate(`/booking/${showtime.id}`)}
+                    onClick={() => navigate(`/booking/${showtime.id}/tickets`)}
                     className="p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-colors text-center"
                   >
                     <div className="text-lg mb-1">{showtime.time}</div>

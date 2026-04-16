@@ -4,10 +4,29 @@ import { Booking } from '../types';
 
 export function Bookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-    setBookings(storedBookings);
+    // Fetch from API first
+    fetch('/api/bookings/my-bookings', { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch bookings');
+        return res.json();
+      })
+      .then(data => {
+        if (data.bookings && Array.isArray(data.bookings)) {
+          setBookings(data.bookings);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      })
+      .catch(err => {
+        // Fallback to localStorage for backwards compatibility
+        console.error('Error fetching bookings from API:', err);
+        const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+        setBookings(storedBookings);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const handleDelete = (bookingId: string) => {
@@ -15,6 +34,16 @@ export function Bookings() {
     setBookings(updatedBookings);
     localStorage.setItem('bookings', JSON.stringify(updatedBookings));
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32">
+        <div className="text-center">
+          <p className="text-gray-600">Loading your bookings...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (bookings.length === 0) {
     return (
@@ -45,7 +74,7 @@ export function Bookings() {
               <div className="md:flex">
                 <div className="md:w-48 h-64 md:h-auto">
                   <img
-                    src={booking.movie.image}
+                    src={booking.movie.poster_url}
                     alt={booking.movie.title}
                     className="w-full h-full object-cover"
                   />
@@ -96,7 +125,11 @@ export function Bookings() {
                       <Armchair className="w-5 h-5 text-gray-600" />
                       <div>
                         <div className="text-sm text-gray-600">Seats</div>
-                        <div>{booking.seats.map(s => s.id).join(', ')}</div>
+                        <div>
+                          {booking.tickets && booking.tickets.length > 0
+                            ? booking.tickets.map((t: any) => t.seat_number || `Seat ${t.seat_id}`).join(', ')
+                            : 'N/A'}
+                        </div>
                       </div>
                     </div>
                   </div>

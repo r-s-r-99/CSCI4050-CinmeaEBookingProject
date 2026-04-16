@@ -3,7 +3,11 @@ import { Layout } from './components/layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import MovieDetail from './pages/MovieDetail';
+import TicketSelection from './pages/TicketSelection';
 import SeatSelection from './pages/SeatSelection';
+import Checkout from './pages/Checkout';
+import Payment from './pages/Payment';
+import PaymentConfirmation from './pages/PaymentConfirmation';
 import Confirmation from './pages/Confirmation';
 import BookingPage from './pages/BookingPage';
 import { Bookings } from './pages/Bookings';
@@ -27,7 +31,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: 'movie/:id', Component: MovieDetail },
+      { path: 'booking/:showtimeId/tickets', Component: TicketSelection },
       { path: 'booking/:showtimeId', Component: SeatSelection },
+      { path: 'checkout', Component: Checkout },
+      { path: 'payment', Component: Payment },
+      { path: 'payment-confirmation', Component: PaymentConfirmation },
       { path: 'confirmation', Component: Confirmation },
       { path: 'bookings', Component: Bookings },
       { path: 'login', Component: Login },

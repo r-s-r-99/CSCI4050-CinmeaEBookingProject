@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { Film, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const confirmed = searchParams.get('confirmed');
+  const redirectTo = location.state?.redirectTo;
+  const booking = location.state?.booking;
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -44,8 +48,11 @@ export default function Login() {
         return;
       }
 
-      // Redirect based on role
-      if (data.role === 'admin') {
+      // Redirect based on role or redirect state
+      if (redirectTo === 'checkout' && booking) {
+        // User was trying to checkout - redirect back with booking data
+        navigate('/checkout', { state: { booking } });
+      } else if (data.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/');
@@ -73,6 +80,12 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-3xl text-center mb-2">Welcome Back</h2>
           <p className="text-gray-600 text-center mb-8">Sign in to your account</p>
+
+          {redirectTo === 'checkout' && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+              <strong>Sign in to continue your booking</strong> — Your selected seats are reserved while you complete the checkout process.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
