@@ -17,7 +17,7 @@ export default function MovieDetail() {
       .then(data => {
         const m = data.movie;
         setMovie({
-          id: m.movie_id,
+          id: m.id,
           title: m.title,
           genre: m.genre,
           rating: m.rating,
@@ -33,6 +33,7 @@ export default function MovieDetail() {
     fetch(`/api/showtimes/${id}`)
       .then(res => res.json())
       .then(data => {
+        console.log('Raw showtimes data:', data); // Log raw response
         const mapped = data.showtimes.map((s: any) => ({
           id: String(s.showtime_id),
           movieId: String(s.movie_id),
@@ -128,9 +129,13 @@ export default function MovieDetail() {
                 {times.map(showtime => (
                   <button
                     key={showtime.id}
+<<<<<<< HEAD
                     onClick={() => navigate(`/booking/${showtime.id}`, {
                       state: {movie, showtime }
                     })}
+=======
+                    onClick={() => navigate(`/booking/${showtime.id}/tickets`)}
+>>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                     className="p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-colors text-center"
                   >
                     <div className="text-lg mb-1">{showtime.time}</div>

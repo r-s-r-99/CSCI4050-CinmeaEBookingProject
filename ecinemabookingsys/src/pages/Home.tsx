@@ -13,11 +13,11 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/movies')
+        fetch('/api/movies?force_customer_view=true')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.movies.map((m: any) => ({
-                    id: m.movie_id,
+                    id: m.id,
                     title: m.title,
                     genre: m.genre,
                     rating: m.rating,
@@ -25,6 +25,9 @@ export default function Home() {
                     poster_url: m.poster_url,
                     trailer_url: m.trailer_url,
                     status: m.status,
+                    isEditable: m.isEditable,
+                    editUrl: m.editUrl,
+                    actions: m.actions,
                 }));
                 setMovies(mapped);
                 setLoading(false);

@@ -39,12 +39,21 @@ export default function AdminHome() {
 
                     {/*Menu Option Grid*/}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<<<<<<< HEAD
                         
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                             <button onClick={(e) => navigate("/admin/manage-movies")}>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2"><Clapperboard />Manage Movies</h3>
                                 <p className="text-gray-500 text-sm">Access and update movie availability</p>
                             </button>
+=======
+                        <div
+                            onClick={() => navigate('/manage-movies')}
+                            className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                        >
+                            <h3 className="text-xl font-bold text-gray-900 mb-2"><Clapperboard />Manage Movies</h3>
+                            <p className="text-gray-500 text-sm">Access and update movie availability</p>
+>>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                         </div>
 
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
@@ -57,7 +66,9 @@ export default function AdminHome() {
                             <p className="text-gray-500 text-sm">Access and update user list</p>
                         </div>
 
-                        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                        <div
+                            onClick={() => navigate('/manage-showtimes')}
+                            className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                             <h3 className="text-xl font-bold text-gray-900 mb-2"><CalendarClock />Manage Showtimes</h3>
                             <p className="text-gray-500 text-sm">Access and update current movie showtimes and dates</p>
                         </div>

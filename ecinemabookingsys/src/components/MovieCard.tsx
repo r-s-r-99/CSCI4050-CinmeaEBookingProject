@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Star, Heart } from 'lucide-react';
-import { Link } from 'react-router';
+import { Star, Heart, Edit3 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { Movie } from '../types';
 
 interface MovieCardProps {
-  movie: Movie;
+  movie: Movie & { isEditable?: boolean; editUrl?: string; actions?: string[] };
   isFavorited?: boolean;
   isAdmin?: Boolean;
 }
 
 export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmin = false }: MovieCardProps) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
+  const navigate = useNavigate();
+
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     const newState = !isFavorited;
 
@@ -32,15 +35,30 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
         throw new Error('Failed to update favorite');
       }
 
-      setIsFavorited(newState); // only update UI if request succeeded
+      setIsFavorited(newState);
     } catch (err) {
       console.error(err);
-      // optionally show a toast/error message here
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // If clicking edit button, don't follow the card link
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    navigate(`/movie/${movie.id}`);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (movie.editUrl) {
+      navigate(movie.editUrl);
+    }
+  };
 
   return (
+<<<<<<< HEAD
     //Route to the admin's movie management page if user is an admin. Route to normal user movie page otherwise.
     <Link 
       to={isAdmin ? 
@@ -49,6 +67,9 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
         `/movie/${movie.id}`
       }
     >
+=======
+    <div onClick={handleClick} className="group cursor-pointer">
+>>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
@@ -65,6 +86,15 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
             <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
               Coming Soon
             </div>
+          )}
+          {movie.isEditable && (
+            <button
+              onClick={handleEdit}
+              className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full transition-colors"
+              title="Edit movie"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
           )}
         </div>
         <div className="p-4">
@@ -91,6 +121,6 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

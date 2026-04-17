@@ -1,20 +1,74 @@
-import { useLocation, useNavigate } from 'react-router';
-import { CheckCircle2, Calendar, Clock, MapPin, Armchair, Ticket } from 'lucide-react';
-import { useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { CheckCircle2, Calendar, Clock, MapPin, Armchair, Ticket, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface BookingData {
+  booking_id: number;
+  movie: any;
+  showtime: any;
+  seats: any[];
+  totalPrice: number;
+  bookingDate?: string;
+  verified?: boolean;
+}
 
 export default function Confirmation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const booking = location.state;
+  const [searchParams] = useSearchParams();
+  const [booking, setBooking] = useState<BookingData | null>(location.state);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
+  const bookingId = searchParams.get('booking_id');
 
   useEffect(() => {
-    if (!booking) {
+    // If booking_id is in URL, fetch from API (email verified)
+    if (bookingId) {
+      setLoading(true);
+      fetch(`/api/bookings/${bookingId}`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.booking) {
+            setBooking(data.booking);
+            setIsEmailVerified(true);
+          } else {
+            setError('Booking not found');
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching booking:', err);
+          setError('Failed to load booking');
+        })
+        .finally(() => setLoading(false));
+    } else if (!booking) {
+      // No booking in state and no booking_id in URL
       navigate('/');
     }
-  }, [booking, navigate]);
+  }, [bookingId, booking, navigate]);
 
-  if (!booking) {
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Loading your booking...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">{error || 'Booking not found'}</p>
+          <button onClick={() => navigate('/')} className="px-4 py-2 bg-red-600 text-white rounded">
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const bookingNumber = `BK${Date.now().toString().slice(-8)}`;
@@ -30,6 +84,12 @@ export default function Confirmation() {
             </div>
             <h1 className="text-3xl mb-2">Booking Confirmed!</h1>
             <p className="text-gray-600">Your tickets have been successfully booked</p>
+            {isEmailVerified && (
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                <Mail className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-700 font-medium">✓ Email Verified</span>
+              </div>
+            )}
           </div>
 
           {/* Booking Details */}
@@ -82,10 +142,43 @@ export default function Confirmation() {
                 </div>
               </div>
 
+              {/* Order Summary - Ticket Breakdown */}
               <div className="pt-4 border-t">
+                <h3 className="font-semibold text-lg mb-3">Order Summary</h3>
+
+                {/* Seats with Details */}
+                <div className="space-y-2 mb-4 bg-gray-50 p-3 rounded">
+                  {booking.seats.map((seat: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <div>
+                        <span className="font-medium">{seat.id}</span>
+                        <span className="text-gray-600 capitalize"> — {seat.category}</span>
+                      </div>
+                      <span className="font-medium">${[12, 8, 6][['adult', 'senior', 'child'].indexOf(seat.category)]}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Ticket Count Breakdown */}
+                <div className="space-y-1 mb-4 pb-4 border-b text-sm">
+                  {(() => {
+                    const counts: Record<string, number> = {};
+                    const prices: Record<string, number> = { adult: 12, senior: 8, child: 6 };
+                    booking.seats.forEach((s: any) => {
+                      counts[s.category] = (counts[s.category] || 0) + 1;
+                    });
+                    return Object.entries(counts).map(([category, count]) => (
+                      <div key={category} className="flex justify-between">
+                        <span className="capitalize">{count}x {category} ticket{count > 1 ? 's' : ''}</span>
+                        <span>${(count * prices[category as keyof typeof prices]).toFixed(2)}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+
                 <div className="flex items-center justify-between text-xl">
-                  <span>Total Paid:</span>
-                  <span className="text-red-600">${booking.totalPrice.toFixed(2)}</span>
+                  <span className="font-semibold">Total Price (Before Tax):</span>
+                  <span className="text-red-600 font-bold">${booking.totalPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>

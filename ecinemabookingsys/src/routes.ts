@@ -1,9 +1,14 @@
 import { createBrowserRouter } from 'react-router';
 import { Layout } from './components/layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import Home from './pages/Home';
 import MovieDetail from './pages/MovieDetail';
+import TicketSelection from './pages/TicketSelection';
 import SeatSelection from './pages/SeatSelection';
+import Checkout from './pages/Checkout';
+import Payment from './pages/Payment';
+import PaymentConfirmation from './pages/PaymentConfirmation';
 import Confirmation from './pages/Confirmation';
 import { Bookings } from './pages/Bookings';
 import SettingsLayout from './pages/SettingsLayout';
@@ -30,7 +35,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: 'movie/:id', Component: MovieDetail },
+      { path: 'booking/:showtimeId/tickets', Component: TicketSelection },
       { path: 'booking/:showtimeId', Component: SeatSelection },
+      { path: 'checkout', Component: Checkout },
+      { path: 'payment', Component: Payment },
+      { path: 'payment-confirmation', Component: PaymentConfirmation },
       { path: 'confirmation', Component: Confirmation },
       { path: 'bookings', Component: Bookings },
       { path: 'login', Component: Login },
@@ -54,8 +63,28 @@ export const router = createBrowserRouter([
 
 
       {
+        path: 'manage-movies',
+        Component: AdminRoute,
+        children: [{ index: true, Component: ManageMovies }],
+      },
+      {
+        path: 'add-movies',
+        Component: AdminRoute,
+        children: [{ index: true, Component: AddMovies }],
+      },
+      {
+        path: 'edit-movies/:id',
+        Component: AdminRoute,
+        children: [{ index: true, Component: EditMovie }],
+      },
+      {
+        path: 'manage-showtimes',
+        Component: AdminRoute,
+        children: [{ index: true, Component: ManageShowtimes }],
+      },
+      {
         path: 'settings',
-        Component: ProtectedRoute,   
+        Component: ProtectedRoute,
         children: [
           {
             Component: SettingsLayout,
