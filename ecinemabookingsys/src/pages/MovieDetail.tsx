@@ -33,6 +33,7 @@ export default function MovieDetail() {
     fetch(`/api/showtimes/${id}`)
       .then(res => res.json())
       .then(data => {
+        console.log('Raw showtimes data:', data); // Log raw response
         const mapped = data.showtimes.map((s: any) => ({
           id: String(s.showtime_id),
           movieId: String(s.movie_id),
@@ -40,7 +41,7 @@ export default function MovieDetail() {
           time: s.show_time,
           theater: 'Main Theater',
         }));
-        console.log('mapped showtimes:', mapped); // ← add this
+        console.log('mapped showtimes:', mapped);
         setShowtimes(mapped);
       })
       .catch(err => console.error('Error fetching showtimes:', err))

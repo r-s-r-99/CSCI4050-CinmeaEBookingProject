@@ -13,7 +13,7 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/movies')
+        fetch('/api/movies?force_customer_view=true')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.movies.map((m: any) => ({

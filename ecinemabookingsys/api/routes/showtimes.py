@@ -28,6 +28,17 @@ def require_admin():
     return True, None
 
 
+@showtimes_bp.route('/api/showtimes/<int:movie_id>')
+def get_showtimes_by_movie(movie_id):
+    """Get all showtimes for a specific movie."""
+    try:
+        decorated = showtime_service.get_showtimes_by_movie_decorated(movie_id)
+        return jsonify({'showtimes': decorated}), 200
+    except Exception as e:
+        print(f"[SHOWTIME] Error fetching showtimes for movie {movie_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @showtimes_bp.route('/api/showtimes', methods=['GET'])
 def get_showtimes():
     """Get all showtimes with movie and room info."""

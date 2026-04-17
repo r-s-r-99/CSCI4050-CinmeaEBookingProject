@@ -71,7 +71,11 @@ def create_movie():
 
 @movies_bp.route('/api/movies')
 def get_movies():
-    """Get all movies with role-specific decoration."""
+    """Get all movies with role-specific decoration.
+
+    Query params:
+    - force_customer_view: If 'true', shows customer view even for admins (useful for home page)
+    """
     user_role = None
     if 'user_id' in session:
         conn = get_db()
@@ -83,14 +87,19 @@ def get_movies():
         finally:
             conn.close()
 
+    force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
     all_movies = movie_repo.find_all()
-    decorated_movies = movie_decorator.get_decorated_movies(all_movies, user_role)
+    decorated_movies = movie_decorator.get_decorated_movies(all_movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
 
 
 @movies_bp.route('/api/movies/now-showing')
 def get_now_showing():
-    """Get movies currently showing."""
+    """Get movies currently showing.
+
+    Query params:
+    - force_customer_view: If 'true', shows customer view even for admins
+    """
     user_role = None
     if 'user_id' in session:
         conn = get_db()
@@ -102,6 +111,7 @@ def get_now_showing():
         finally:
             conn.close()
 
+    force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
     conn = get_db()
     with conn.cursor() as cursor:
         cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Currently Running'")
@@ -119,13 +129,17 @@ def get_now_showing():
         status=row['status']
     ) for row in rows]
 
-    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role)
+    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
 
 
 @movies_bp.route('/api/movies/coming-soon')
 def get_coming_soon():
-    """Get movies coming soon."""
+    """Get movies coming soon.
+
+    Query params:
+    - force_customer_view: If 'true', shows customer view even for admins
+    """
     user_role = None
     if 'user_id' in session:
         conn = get_db()
@@ -137,6 +151,7 @@ def get_coming_soon():
         finally:
             conn.close()
 
+    force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
     conn = get_db()
     with conn.cursor() as cursor:
         cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Coming Soon'")
@@ -154,13 +169,17 @@ def get_coming_soon():
         status=row['status']
     ) for row in rows]
 
-    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role)
+    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
 
 
 @movies_bp.route('/api/movies/<int:movie_id>')
 def get_movies_details(movie_id):
-    """Get single movie with role-specific decoration."""
+    """Get single movie with role-specific decoration.
+
+    Query params:
+    - force_customer_view: If 'true', shows customer view even for admins (useful for home page previews)
+    """
     user_role = None
     if 'user_id' in session:
         conn = get_db()
@@ -172,7 +191,8 @@ def get_movies_details(movie_id):
         finally:
             conn.close()
 
-    decorated_movie = movie_decorator.get_decorated_movie(movie_id, user_role)
+    force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
+    decorated_movie = movie_decorator.get_decorated_movie(movie_id, user_role, force_customer_view=force_customer_view)
     if not decorated_movie:
         return jsonify({'error': 'Movie not found'}), 404
     return {"movie": decorated_movie}

@@ -27,7 +27,7 @@ class ShowtimeService:
         Check if there's a scheduling conflict for a showtime.
 
         A conflict exists if another showtime is scheduled in the same room
-        within 2 hours of the proposed time (accounting for typical movie duration).
+        at the exact same time.
 
         Args:
             room_id: Showroom ID
@@ -74,7 +74,7 @@ class ShowtimeService:
 
                 # Movies typically run 90-180 minutes, check 2-hour buffer
                 time_diff = abs(show_time_minutes - existing_time_minutes)
-                if time_diff < 120:  # Within 2 hours
+                if time_diff == 0:  # Exact same time
                     conflicts.append({
                         'showtime_id': row['showtime_id'],
                         'movie_title': row['title'],
@@ -151,6 +151,47 @@ class ShowtimeService:
         Returns: List of showtime dicts with conflict info
         """
         showtimes = self.showtime_repo.get_all()
+
+        decorated = []
+        for st in showtimes:
+            # Get movie title
+            movie = self.movie_repo.find_by_id(st.movie_id)
+            movie_title = movie.title if movie else "Unknown"
+
+            # Get showroom number
+            showroom = self.showroom_repo.find_by_id(st.room_id)
+            room_number = showroom.room_number if showroom else st.room_id
+
+            # Convert show_time to string if it's a time object
+            show_time_str = str(st.show_time) if st.show_time else ""
+            if show_time_str and len(show_time_str) > 5:  # HH:MM:SS format
+                show_time_str = show_time_str[:5]  # Keep only HH:MM
+
+            # Convert show_date to string if it's a date object
+            show_date_str = str(st.show_date) if st.show_date else ""
+
+            decorated.append({
+                'showtime_id': st.showtime_id,
+                'movie_id': st.movie_id,
+                'movie_title': movie_title,
+                'show_date': show_date_str,
+                'show_time': show_time_str,
+                'room_id': st.room_id,
+                'room_number': room_number,
+            })
+
+        return decorated
+
+    def get_showtimes_by_movie_decorated(self, movie_id):
+        """
+        Get all showtimes for a specific movie with decoration.
+
+        Args:
+            movie_id: Movie ID to get showtimes for
+
+        Returns: List of showtime dicts decorated with movie and room info
+        """
+        showtimes = self.showtime_repo.find_by_movie(movie_id)
 
         decorated = []
         for st in showtimes:

@@ -100,7 +100,7 @@ export default function ManageShowtimes() {
       const data = await res.json();
       if (data.has_conflict) {
         setConflictWarning(
-          `⚠️ Potential conflict: ${data.conflicting_showtimes.length} showtime(s) scheduled within 2 hours in this room.`
+          `⚠️ Conflict: ${data.conflicting_showtimes.length} showtime(s) already scheduled at this time in this room.`
         );
       } else {
         setConflictWarning('');

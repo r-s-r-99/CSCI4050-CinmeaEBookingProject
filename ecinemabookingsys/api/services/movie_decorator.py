@@ -33,18 +33,35 @@ class MovieDecorator:
         })
         return movie_dict
 
-    def get_decorated_movie(self, movie_id, user_role=None):
-        """Get a single movie decorated based on user role."""
+    def get_decorated_movie(self, movie_id, user_role=None, force_customer_view=False):
+        """Get a single movie decorated based on user role.
+
+        Args:
+            movie_id: Movie ID to decorate
+            user_role: User's role ('admin' or None for customer)
+            force_customer_view: If True, always show customer view regardless of role
+        """
         movie = self.movie_repo.find_by_id(movie_id)
         if not movie:
             return None
 
-        if user_role == 'admin':
+        if force_customer_view:
+            return self.decorate_for_customer(movie)
+        elif user_role == 'admin':
             return self.decorate_for_admin(movie)
         else:
             return self.decorate_for_customer(movie)
 
-    def get_decorated_movies(self, movies, user_role=None):
-        """Decorate multiple movies based on user role."""
-        decorator_func = self.decorate_for_admin if user_role == 'admin' else self.decorate_for_customer
+    def get_decorated_movies(self, movies, user_role=None, force_customer_view=False):
+        """Decorate multiple movies based on user role.
+
+        Args:
+            movies: List of Movie objects to decorate
+            user_role: User's role ('admin' or None for customer)
+            force_customer_view: If True, always show customer view regardless of role
+        """
+        if force_customer_view:
+            decorator_func = self.decorate_for_customer
+        else:
+            decorator_func = self.decorate_for_admin if user_role == 'admin' else self.decorate_for_customer
         return [decorator_func(movie) for movie in movies]

@@ -33,7 +33,7 @@ class ShowtimeRepository(CRUDRepository):
         query = """
             SELECT showtime_id, movie_id, show_date, show_time, room_id
             FROM Showtime
-            WHERE movie_id = %s AND show_date >= CURDATE()
+            WHERE movie_id = %s
             ORDER BY show_date, show_time
         """
 
@@ -44,13 +44,13 @@ class ShowtimeRepository(CRUDRepository):
         return [Showtime(**row) for row in rows]
 
     def find_available_by_movie(self, movie_id):
-        """Get available showtimes for a movie (future dates only)."""
+        """Get available showtimes for a movie."""
         from models.showtime import Showtime
 
         query = """
             SELECT showtime_id, movie_id, show_date, show_time, room_id
             FROM Showtime
-            WHERE movie_id = %s AND show_date >= CURDATE()
+            WHERE movie_id = %s
             ORDER BY show_date, show_time
         """
         rows = self.execute_query(query, (movie_id,))
@@ -64,7 +64,9 @@ class ShowtimeRepository(CRUDRepository):
 
     def save(self, showtime):
         """Save showtime (insert or update)."""
-        if showtime.get("showtime_id"):
+        from models.showtime import Showtime
+
+        if showtime.showtime_id:
             # Update
             query = """
                 UPDATE Showtime
@@ -74,13 +76,14 @@ class ShowtimeRepository(CRUDRepository):
             self.execute_update(
                 query,
                 (
-                    showtime.get("movie_id"),
-                    showtime.get("show_date"),
-                    showtime.get("show_time"),
-                    showtime.get("room_id"),
-                    showtime["showtime_id"],
+                    showtime.movie_id,
+                    showtime.show_date,
+                    showtime.show_time,
+                    showtime.room_id,
+                    showtime.showtime_id,
                 ),
             )
+            return showtime
         else:
             # Insert
             query = """
@@ -90,20 +93,25 @@ class ShowtimeRepository(CRUDRepository):
             showtime_id = self.execute_insert_get_id(
                 query,
                 (
-                    showtime.get("movie_id"),
-                    showtime.get("show_date"),
-                    showtime.get("show_time"),
-                    showtime.get("room_id"),
+                    showtime.movie_id,
+                    showtime.show_date,
+                    showtime.show_time,
+                    showtime.room_id,
                 ),
             )
-            showtime["showtime_id"] = showtime_id
-
-        return showtime
+            # Return a new Showtime object with the generated ID
+            return Showtime(
+                showtime_id=showtime_id,
+                movie_id=showtime.movie_id,
+                room_id=showtime.room_id,
+                show_date=showtime.show_date,
+                show_time=showtime.show_time
+            )
 
     def delete(self, showtime):
         """Delete showtime."""
         query = "DELETE FROM Showtime WHERE showtime_id = %s"
-        self.execute_update(query, (showtime["showtime_id"],))
+        self.execute_update(query, (showtime.showtime_id,))
         return True
 
     def get_all(self):
