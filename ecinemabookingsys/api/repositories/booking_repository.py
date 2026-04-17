@@ -23,27 +23,69 @@ class BookingRepository(CRUDRepository):
         """
         Find booking by ID with all related data.
 
-        Returns: Booking object with movie, showtime, and tickets populated, or None
+        Returns: Booking object with showtime, payment_card, promotion, and tickets populated, or None
         """
         # Import here to avoid circular imports
         from models.booking import Booking
         from models.ticket import Ticket
+        from models.showtime import Showtime
+        from models.promotion import Promotion
+        from models.payment_card import PaymentCard
+        from models.seat import Seat
 
         query = """
             SELECT b.booking_id, b.user_id, b.showtime_id, b.total_price, b.booking_date,
                    b.card_id, b.promotion_id,
                    m.movie_id, m.title, m.genre, m.rating, m.description, m.poster_url, m.trailer_url, m.status,
-                   s.show_date, s.show_time, sr.room_id
+                   s.showtime_id as st_showtime_id, s.movie_id as st_movie_id, s.room_id, s.show_date, s.show_time,
+                   sr.room_id as sr_room_id, sr.room_number, sr.number_of_seats,
+                   p.promotion_id as p_promotion_id, p.code, p.discount_percentage, p.start_date, p.end_date, p.tickets_available,
+                   pc.card_id as pc_card_id, pc.user_id as pc_user_id, pc.card_name, pc.card_number, pc.cvv, pc.expiration_date
             FROM Booking b
             JOIN Showtime s ON b.showtime_id = s.showtime_id
             LEFT JOIN Movie m ON s.movie_id = m.movie_id
             LEFT JOIN Showroom sr ON s.room_id = sr.room_id
+            LEFT JOIN Promotion p ON b.promotion_id = p.promotion_id
+            LEFT JOIN PaymentCard pc ON b.card_id = pc.card_id
             WHERE b.booking_id = %s
         """
 
         row = self.execute_query_one(query, (booking_id,))
         if not row:
             return None
+
+        # Create Showtime domain object
+        showtime = Showtime(
+            showtime_id=row.get("st_showtime_id"),
+            movie_id=row.get("st_movie_id"),
+            room_id=row.get("room_id"),
+            show_date=row.get("show_date"),
+            show_time=row.get("show_time"),
+        )
+
+        # Create Promotion domain object if exists
+        promotion = None
+        if row.get("p_promotion_id"):
+            promotion = Promotion(
+                promotion_id=row.get("p_promotion_id"),
+                code=row.get("code"),
+                discount_percentage=row.get("discount_percentage"),
+                start_date=row.get("start_date"),
+                end_date=row.get("end_date"),
+                tickets_available=row.get("tickets_available"),
+            )
+
+        # Create PaymentCard domain object if exists
+        payment_card = None
+        if row.get("pc_card_id"):
+            payment_card = PaymentCard(
+                card_id=row.get("pc_card_id"),
+                user_id=row.get("pc_user_id"),
+                card_name=row.get("card_name"),
+                card_number=row.get("card_number"),
+                cvv=row.get("cvv"),
+                expiration_date=row.get("expiration_date"),
+            )
 
         # Create Booking domain object with composed objects
         booking = Booking(
@@ -54,7 +96,7 @@ class BookingRepository(CRUDRepository):
             booking_date=row["booking_date"],
             card_id=row["card_id"],
             promotion_id=row["promotion_id"],
-            movie={  # TODO: Replace with Movie object
+            movie={  # Movie data from joined Movie table
                 "id": row["movie_id"],
                 "title": row["title"],
                 "genre": row["genre"],
@@ -64,27 +106,46 @@ class BookingRepository(CRUDRepository):
                 "trailer_url": row["trailer_url"],
                 "status": row["status"],
             },
-            showtime={  # TODO: Replace with Showtime object
-                "id": str(row["showtime_id"]),
-                "date": (
-                    row["show_date"].strftime("%A, %B %d, %Y")
-                    if row["show_date"]
-                    else "N/A"
-                ),
-                "time": str(row["show_time"]) if row["show_time"] else "N/A",
-                "theater": f"Theater {row['room_id']}" if row["room_id"] else "N/A",
-            },
+            showtime=showtime,  # Now a Showtime object
+            payment_card=payment_card,  # Now a PaymentCard object or None
+            promotion=promotion,  # Now a Promotion object or None
         )
 
-        # Fetch and attach tickets as Ticket objects
+        # Fetch and attach tickets with seat information
         ticket_query = """
-            SELECT ticket_id, booking_id, seat_id, ticket_type, show_date, ticket_price
-            FROM Ticket WHERE booking_id = %s
+            SELECT t.ticket_id, t.booking_id, t.seat_id, t.ticket_type, t.show_date, t.ticket_price,
+                   s.seat_number, s.room_id
+            FROM Ticket t
+            LEFT JOIN Seat s ON t.seat_id = s.seat_id
+            WHERE t.booking_id = %s
         """
-        tickets = self.execute_query(ticket_query, (booking_id,))
-        booking.tickets = [Ticket(**dict(t)) for t in tickets]
+        tickets_data = self.execute_query(ticket_query, (booking_id,))
+        booking.tickets = []
+        for t in tickets_data:
+            # Create Seat domain object if seat data exists
+            seat = None
+            if t.get("seat_id"):
+                seat = Seat(
+                    seat_id=t.get("seat_id"),
+                    seat_number=t.get("seat_number"),
+                    room_id=t.get("room_id")
+                )
+
+            # Create Ticket with composed Seat object
+            ticket = Ticket(
+                ticket_id=t["ticket_id"],
+                booking_id=t["booking_id"],
+                seat_id=t["seat_id"],
+                ticket_type=t["ticket_type"],
+                ticket_price=t["ticket_price"],
+                show_date=t["show_date"],
+                seat=seat
+            )
+            booking.tickets.append(ticket)
 
         return booking
+
+
 
     def find_all_by_user(self, user_id):
         """
@@ -94,16 +155,25 @@ class BookingRepository(CRUDRepository):
         """
         from models.booking import Booking
         from models.ticket import Ticket
+        from models.showtime import Showtime
+        from models.promotion import Promotion
+        from models.payment_card import PaymentCard
+        from models.seat import Seat
 
         query = """
             SELECT b.booking_id, b.user_id, b.showtime_id, b.total_price, b.booking_date,
                    b.card_id, b.promotion_id,
                    m.movie_id, m.title, m.genre, m.rating, m.description, m.poster_url, m.trailer_url, m.status,
-                   s.show_date, s.show_time, sr.room_id
+                   s.showtime_id as st_showtime_id, s.movie_id as st_movie_id, s.room_id, s.show_date, s.show_time,
+                   sr.room_id as sr_room_id, sr.room_number, sr.number_of_seats,
+                   p.promotion_id as p_promotion_id, p.code, p.discount_percentage, p.start_date, p.end_date, p.tickets_available,
+                   pc.card_id as pc_card_id, pc.user_id as pc_user_id, pc.card_name, pc.card_number, pc.cvv, pc.expiration_date
             FROM Booking b
             LEFT JOIN Showtime s ON b.showtime_id = s.showtime_id
             LEFT JOIN Movie m ON s.movie_id = m.movie_id
             LEFT JOIN Showroom sr ON s.room_id = sr.room_id
+            LEFT JOIN Promotion p ON b.promotion_id = p.promotion_id
+            LEFT JOIN PaymentCard pc ON b.card_id = pc.card_id
             WHERE b.user_id = %s
             ORDER BY b.booking_date DESC
         """
@@ -112,6 +182,39 @@ class BookingRepository(CRUDRepository):
         bookings = []
 
         for row in rows:
+            # Create Showtime domain object
+            showtime = Showtime(
+                showtime_id=row.get("st_showtime_id"),
+                movie_id=row.get("st_movie_id"),
+                room_id=row.get("room_id"),
+                show_date=row.get("show_date"),
+                show_time=row.get("show_time"),
+            )
+
+            # Create Promotion domain object if exists
+            promotion = None
+            if row.get("p_promotion_id"):
+                promotion = Promotion(
+                    promotion_id=row.get("p_promotion_id"),
+                    code=row.get("code"),
+                    discount_percentage=row.get("discount_percentage"),
+                    start_date=row.get("start_date"),
+                    end_date=row.get("end_date"),
+                    tickets_available=row.get("tickets_available"),
+                )
+
+            # Create PaymentCard domain object if exists
+            payment_card = None
+            if row.get("pc_card_id"):
+                payment_card = PaymentCard(
+                    card_id=row.get("pc_card_id"),
+                    user_id=row.get("pc_user_id"),
+                    card_name=row.get("card_name"),
+                    card_number=row.get("card_number"),
+                    cvv=row.get("cvv"),
+                    expiration_date=row.get("expiration_date"),
+                )
+
             booking = Booking(
                 booking_id=row["booking_id"],
                 user_id=row["user_id"],
@@ -130,29 +233,47 @@ class BookingRepository(CRUDRepository):
                     "trailer_url": row["trailer_url"],
                     "status": row["status"],
                 },
-                showtime={
-                    "id": str(row["showtime_id"]),
-                    "date": (
-                        row["show_date"].strftime("%a, %b %d, %Y")
-                        if row["show_date"]
-                        else "N/A"
-                    ),
-                    "time": str(row["show_time"]) if row["show_time"] else "N/A",
-                    "theater": f"Theater {row['room_id']}" if row["room_id"] else "N/A",
-                },
+                showtime=showtime,  # Now a Showtime object
+                payment_card=payment_card,  # Now a PaymentCard object or None
+                promotion=promotion,  # Now a Promotion object or None
             )
 
-            # Attach tickets as Ticket objects for this booking
+            # Attach tickets with seat information for this booking
             ticket_query = """
-                SELECT ticket_id, booking_id, seat_id, ticket_type, show_date, ticket_price
-                FROM Ticket WHERE booking_id = %s
+                SELECT t.ticket_id, t.booking_id, t.seat_id, t.ticket_type, t.show_date, t.ticket_price,
+                       s.seat_number, s.room_id
+                FROM Ticket t
+                LEFT JOIN Seat s ON t.seat_id = s.seat_id
+                WHERE t.booking_id = %s
             """
-            tickets = self.execute_query(ticket_query, (row["booking_id"],))
-            booking.tickets = [Ticket(**dict(t)) for t in tickets]
+            tickets_data = self.execute_query(ticket_query, (row["booking_id"],))
+            booking.tickets = []
+            for t in tickets_data:
+                # Create Seat domain object if seat data exists
+                seat = None
+                if t.get("seat_id"):
+                    seat = Seat(
+                        seat_id=t.get("seat_id"),
+                        seat_number=t.get("seat_number"),
+                        room_id=t.get("room_id")
+                    )
+
+                # Create Ticket with composed Seat object
+                ticket = Ticket(
+                    ticket_id=t["ticket_id"],
+                    booking_id=t["booking_id"],
+                    seat_id=t["seat_id"],
+                    ticket_type=t["ticket_type"],
+                    ticket_price=t["ticket_price"],
+                    show_date=t["show_date"],
+                    seat=seat
+                )
+                booking.tickets.append(ticket)
 
             bookings.append(booking)
 
         return bookings
+
 
     def save(self, booking):
         """

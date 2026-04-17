@@ -12,6 +12,10 @@ from repositories.booking_repository import BookingRepository, TicketRepository
 from repositories.movie_repository import MovieRepository
 from repositories.showtime_repository import ShowtimeRepository
 from repositories.seat_repository import SeatRepository
+from repositories.showroom_repository import ShowroomRepository
+from repositories.promotion_repository import PromotionRepository
+from repositories.payment_card_repository import PaymentCardRepository
+from repositories.temporary_booking_repository import TemporaryBookingRepository
 from models.ticket import Ticket
 
 
@@ -33,6 +37,11 @@ class BookingService:
         self.movie_repo = MovieRepository()
         self.showtime_repo = ShowtimeRepository()
         self.seat_repo = SeatRepository()
+        self.showroom_repo = ShowroomRepository()
+        self.promotion_repo = PromotionRepository()
+        self.payment_card_repo = PaymentCardRepository()
+        self.temp_booking_repo = TemporaryBookingRepository()
+
 
     def create_temporary_booking(self, user_id, showtime_id, seats, email, total_price):
         """
@@ -65,27 +74,8 @@ class BookingService:
             "expires_at": expires_at.isoformat(),
         }
 
-        # Try to store in database if table exists
-        try:
-            query = """
-                INSERT INTO temporary_bookings (token, user_id, booking_data, expires_at)
-                VALUES (%s, %s, %s, %s)
-            """
-            conn = get_db()
-            try:
-                with conn.cursor() as cursor:
-                    import json
-
-                    cursor.execute(
-                        query,
-                        (token, user_id, json.dumps(booking_data), expires_at),
-                    )
-                    conn.commit()
-            finally:
-                conn.close()
-        except Exception as e:
-            # Table doesn't exist - that's okay, session storage is fallback
-            print(f"[BOOKING] Could not store in DB: {e}. Using session storage.")
+        # Use repository to store in database (table may not exist - falls back gracefully)
+        self.temp_booking_repo.save(token, user_id, booking_data, expires_at)
 
         return {
             "temp_booking_token": token,
@@ -98,27 +88,12 @@ class BookingService:
 
         Returns: Booking data if valid, raises exception if invalid/expired
         """
-        import json as json_lib
+        # Try to find in database via repository
+        booking_data = self.temp_booking_repo.find_by_token(token)
 
-        # Try database first
-        query = """
-            SELECT booking_data, expires_at
-            FROM temporary_bookings
-            WHERE token = %s AND expires_at > NOW()
-        """
-
-        conn = get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (token,))
-                row = cursor.fetchone()
-
-            if row:
-                # Found valid token in database
-                booking_data = json_lib.loads(row["booking_data"])
-                return booking_data, True  # Found in DB
-        finally:
-            conn.close()
+        if booking_data:
+            # Found valid token in database
+            return booking_data, True  # Found in DB
 
         # Fallback to session data
         if booking_data_from_session:
@@ -168,14 +143,14 @@ class BookingService:
         """
         Finalize booking after email verification.
 
-        Creates actual Booking and Ticket records in database.
+        Creates actual Booking and Ticket records in database with proper composition.
 
         Args:
             token: Verification token
             booking_data: Data from temporary booking
             user_id: User ID
 
-        Returns: Booking domain object
+        Returns: Booking domain object with all relationships populated
         """
         from models.booking import Booking
 
@@ -183,18 +158,35 @@ class BookingService:
         showtime_id = booking_data.get("showtime_id")
         seats = booking_data.get("seats", [])
         total_price = booking_data.get("total_price")
+        card_id = booking_data.get("card_id")  # Optional
+        promotion_code = booking_data.get("promotion_code")  # Optional
 
-        # Get room_id for seat lookups
-        showtime_repo = ShowtimeRepository()
-        room_id = showtime_repo.get_room_id(showtime_id)
+        # Resolve Showtime domain object
+        showtime = self.showtime_repo.find_by_id(showtime_id)
+        room_id = showtime.room_id if showtime else None
 
-        # Create Booking record
+        # Resolve PaymentCard domain object (optional)
+        payment_card = None
+        if card_id:
+            payment_card = self.payment_card_repo.find_by_id(card_id)
+
+        # Resolve Promotion domain object (optional)
+        promotion = None
+        if promotion_code:
+            promotion = self.promotion_repo.find_by_code(promotion_code)
+
+        # Create Booking record with composed domain objects
         booking = Booking(
             booking_id=None,  # Will be generated
             user_id=user_id,
             showtime_id=showtime_id,
             total_price=total_price,
             booking_date=datetime.now(),
+            card_id=card_id,  # Keep ID as well (for DB storage)
+            promotion_id=promotion.promotion_id if promotion else None,  # Keep ID
+            showtime=showtime,  # NEW: Showtime domain object
+            payment_card=payment_card,  # NEW: PaymentCard domain object
+            promotion=promotion,  # NEW: Promotion domain object
         )
         booking = self.booking_repo.save(booking)
 
@@ -202,24 +194,30 @@ class BookingService:
         tickets_to_create = []
 
         for seat in seats:
+            # Frontend sends seat_id (e.g., "A1", "B5")
+            seat_number = seat.get("seat_id")
+
             # Use repository to lookup seat by seat number and room
             seat_obj = self.seat_repo.find_by_number_and_room(
-                seat.get("id"), room_id
+                seat_number, room_id
             )  # e.g., "A1" -> Seat object
             seat_id = seat_obj.seat_id if seat_obj else None
 
             if not seat_id:
-                print(f"[WARNING] Could not find seat {seat.get('id')} in room {room_id}")
+                print(f"[WARNING] Could not find seat {seat_number} in room {room_id}")
                 continue
+
+            # Get show_date from showtime object
+            show_date = showtime.show_date if showtime else None
 
             # Create Ticket objects (not dicts)
             ticket = Ticket(
                 ticket_id=None,  # Will be generated by DB
                 booking_id=booking.booking_id,
                 seat_id=seat_id,
-                ticket_type=seat.get("category", "adult"),
-                ticket_price=self._get_ticket_price(seat.get("category", "adult")),
-                show_date=booking_data.get("show_date")
+                ticket_type=seat.get("ticket_type", "adult"),
+                ticket_price=seat.get("ticket_price"),
+                show_date=show_date
             )
             tickets_to_create.append(ticket)
 
@@ -227,22 +225,12 @@ class BookingService:
         if tickets_to_create:
             self.ticket_repo.create_batch(tickets_to_create)
 
-        # Delete temporary booking record if it exists
-        try:
-            conn = get_db()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        "DELETE FROM temporary_bookings WHERE token = %s", (token,)
-                    )
-                    conn.commit()
-            finally:
-                conn.close()
-        except Exception as e:
-            print(f"[BOOKING] Could not delete temp booking: {e}")
+        # Delete temporary booking record via repository
+        self.temp_booking_repo.delete(token)
 
-        # Reload booking with tickets and related data
+        # Reload booking with all relationships
         return self.booking_repo.find_by_id(booking.booking_id)
+
 
     def get_booking(self, booking_id, user_id=None):
         """
@@ -275,6 +263,33 @@ class BookingService:
             return False
 
         return self.booking_repo.delete(booking)
+
+    def cancel_booking_with_auth(self, booking_id, user_id):
+        """
+        Cancel a booking with authorization check.
+
+        Args:
+            booking_id: ID of booking to cancel
+            user_id: ID of user attempting cancellation (must own booking)
+
+        Returns:
+            True if successful, False if not found or unauthorized
+
+        Raises:
+            ValueError if booking cannot be cancelled
+        """
+        # Fetch booking
+        booking = self.booking_repo.find_by_id(booking_id)
+        if not booking:
+            return False
+
+        # Check authorization - user must own the booking
+        if booking.user_id != user_id:
+            raise ValueError("Unauthorized: You can only cancel your own bookings")
+
+        # Delete booking (cascades to tickets)
+        return self.booking_repo.delete(booking)
+
 
     # Helper methods
     @staticmethod

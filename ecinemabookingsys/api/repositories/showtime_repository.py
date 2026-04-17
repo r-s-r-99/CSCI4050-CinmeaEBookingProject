@@ -2,6 +2,7 @@
 Showtime Repository - Data access for Showtime entities.
 
 Handles fetching showtime data with movie and room information.
+Returns Showtime domain objects, never dicts.
 """
 
 from repositories.base_repository import CRUDRepository
@@ -12,30 +13,23 @@ class ShowtimeRepository(CRUDRepository):
 
     def find_by_id(self, showtime_id):
         """Find showtime by ID with associated movie and room."""
+        from models.showtime import Showtime
+
         query = """
-            SELECT s.showtime_id, s.movie_id, s.show_date, s.show_time, s.room_id,
-                   m.title, m.genre, m.rating,
-                   sr.room_id, sr.max_capacity
+            SELECT s.showtime_id, s.movie_id, s.show_date, s.show_time, s.room_id
             FROM Showtime s
-            LEFT JOIN Movie m ON s.movie_id = m.movie_id
-            LEFT JOIN Showroom sr ON s.room_id = sr.room_id
             WHERE s.showtime_id = %s
         """
         row = self.execute_query_one(query, (showtime_id,))
         if not row:
             return None
 
-        return {
-            "showtime_id": row["showtime_id"],
-            "movie_id": row["movie_id"],
-            "show_date": row["show_date"],
-            "show_time": row["show_time"],
-            "room_id": row["room_id"],
-            "max_capacity": row["max_capacity"],
-        }
+        return Showtime(**row)
 
     def find_by_movie(self, movie_id, limit=None):
         """Get all showtimes for a movie."""
+        from models.showtime import Showtime
+
         query = """
             SELECT showtime_id, movie_id, show_date, show_time, room_id
             FROM Showtime
@@ -47,10 +41,12 @@ class ShowtimeRepository(CRUDRepository):
             query += f" LIMIT {limit}"
 
         rows = self.execute_query(query, (movie_id,))
-        return [dict(row) for row in rows]
+        return [Showtime(**row) for row in rows]
 
     def find_available_by_movie(self, movie_id):
         """Get available showtimes for a movie (future dates only)."""
+        from models.showtime import Showtime
+
         query = """
             SELECT showtime_id, movie_id, show_date, show_time, room_id
             FROM Showtime
@@ -58,7 +54,7 @@ class ShowtimeRepository(CRUDRepository):
             ORDER BY show_date, show_time
         """
         rows = self.execute_query(query, (movie_id,))
-        return [dict(row) for row in rows]
+        return [Showtime(**row) for row in rows]
 
     def get_room_id(self, showtime_id):
         """Get the room_id for a showtime (useful for seat lookups)."""
@@ -112,6 +108,9 @@ class ShowtimeRepository(CRUDRepository):
 
     def get_all(self):
         """Get all showtimes."""
+        from models.showtime import Showtime
+
         query = "SELECT * FROM Showtime ORDER BY show_date, show_time"
         rows = self.execute_query(query)
-        return [dict(row) for row in rows]
+        return [Showtime(**row) for row in rows]
+

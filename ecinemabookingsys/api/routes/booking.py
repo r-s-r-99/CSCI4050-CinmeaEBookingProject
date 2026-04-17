@@ -31,6 +31,16 @@ def create_temporary_booking():
         if not all(k in data for k in ['showtime_id', 'seats', 'email', 'total_price']):
             return jsonify({'error': 'Missing required fields (showtime_id, seats, email, total_price)'}), 400
 
+        # Store booking data in session for later retrieval during payment/verification
+        session['temp_booking'] = {
+            'user_id': session['user_id'],
+            'showtime_id': data['showtime_id'],
+            'seats': data['seats'],
+            'email': data['email'],
+            'total_price': data['total_price'],
+        }
+        session.modified = True
+
         # Use service to create temporary booking
         result = booking_service.create_temporary_booking(
             user_id=session['user_id'],
@@ -148,6 +158,31 @@ def verify_booking(token):
 
 
 
+@booking_bp.route('/api/bookings/my-bookings', methods=['GET'])
+def get_my_bookings():
+    """
+    Get all bookings for authenticated user.
+
+    Route handler: Thin request/response adapter
+    Business logic: Handled by BookingService
+    """
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        bookings = booking_service.get_user_bookings(session['user_id'])
+
+        return jsonify({
+            'status': 'success',
+            'bookings': [b.to_dict() for b in bookings],
+        }), 200
+
+    except Exception as e:
+        print(f"[BOOKINGS] Error fetching user bookings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+
 @booking_bp.route('/api/bookings/<booking_id>', methods=['GET'])
 def get_booking(booking_id):
     """
@@ -173,27 +208,37 @@ def get_booking(booking_id):
         return jsonify({'error': str(e)}), 500
 
 
-@booking_bp.route('/api/bookings/my-bookings', methods=['GET'])
-def get_my_bookings():
+@booking_bp.route('/api/bookings/<booking_id>', methods=['DELETE'])
+def delete_booking(booking_id):
     """
-    Get all bookings for logged-in user.
+    Delete a booking (cancel) - authenticated user only.
 
     Route handler: Thin request/response adapter
     Business logic: Handled by BookingService
+
+    Authorization: User can only delete their own bookings
     """
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     try:
-        # Use service to get bookings
-        bookings = booking_service.get_user_bookings(session['user_id'])
+        # Use service to cancel booking (enforces authorization)
+        success = booking_service.cancel_booking_with_auth(booking_id, session['user_id'])
+
+        if not success:
+            return jsonify({'error': 'Booking not found or unauthorized'}), 404
 
         return jsonify({
-            'bookings': [b.to_dict() for b in bookings],
-            'count': len(bookings),
+            'status': 'deleted',
+            'message': 'Booking cancelled successfully',
+            'booking_id': booking_id,
         }), 200
 
+    except ValueError as e:
+        # Validation error (e.g., booking cannot be cancelled)
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
-        print(f"[BOOKINGS] Error getting user bookings: {e}")
+        print(f"[DELETE] Error deleting booking: {e}")
         return jsonify({'error': str(e)}), 500
+
 

@@ -29,10 +29,26 @@ export function Bookings() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = (bookingId: string) => {
-    const updatedBookings = bookings.filter(b => b.id !== bookingId);
-    setBookings(updatedBookings);
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  const handleDelete = async (bookingId: string) => {
+    try {
+      // Call API to delete from database
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete booking');
+      }
+
+      // Only update local state on success
+      const updatedBookings = bookings.filter(b => b.id !== bookingId);
+      setBookings(updatedBookings);
+      localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    } catch (err) {
+      console.error('Error deleting booking:', err);
+      alert('Failed to delete booking. Please try again.');
+    }
   };
 
   if (loading) {
@@ -101,7 +117,7 @@ export function Bookings() {
                       <Calendar className="w-5 h-5 text-gray-600" />
                       <div>
                         <div className="text-sm text-gray-600">Date</div>
-                        <div>{booking.showtime.date}</div>
+                        <div>{booking.showtime.showDate}</div>
                       </div>
                     </div>
 
@@ -109,7 +125,7 @@ export function Bookings() {
                       <Clock className="w-5 h-5 text-gray-600" />
                       <div>
                         <div className="text-sm text-gray-600">Time</div>
-                        <div>{booking.showtime.time}</div>
+                        <div>{booking.showtime.showTime}</div>
                       </div>
                     </div>
 
@@ -117,7 +133,7 @@ export function Bookings() {
                       <MapPin className="w-5 h-5 text-gray-600" />
                       <div>
                         <div className="text-sm text-gray-600">Theater</div>
-                        <div>{booking.showtime.theater}</div>
+                        <div>{booking.showtime.roomId}</div>
                       </div>
                     </div>
 
@@ -127,7 +143,7 @@ export function Bookings() {
                         <div className="text-sm text-gray-600">Seats</div>
                         <div>
                           {booking.tickets && booking.tickets.length > 0
-                            ? booking.tickets.map((t: any) => t.seat_number || `Seat ${t.seat_id}`).join(', ')
+                            ? booking.tickets.map((t: any) => t.seatNumber || `Seat ${t.seatId}`).join(', ')
                             : 'N/A'}
                         </div>
                       </div>

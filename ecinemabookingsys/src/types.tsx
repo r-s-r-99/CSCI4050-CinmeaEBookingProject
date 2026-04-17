@@ -26,10 +26,18 @@ export interface Seat {
 }
 
 export interface Booking {
-  id: string;
+  id: string | number;
+  bookingId: string | number;
   movie: Movie;
-  showtime: Showtime;
-  seats: Seat[];
+  showtime: {
+    showtimeId: string;
+    movieId: string;
+    roomId: string;
+    showDate: string;
+    showTime: string;
+  };
+  tickets: any[];
   totalPrice: number;
   bookingDate: string;
+  userId: string | number;
 }
