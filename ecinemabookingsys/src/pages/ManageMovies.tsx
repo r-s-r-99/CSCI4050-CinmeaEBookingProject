@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MovieCard } from '../components/MovieCard';
-<<<<<<< HEAD
 import { Search, TicketX, Pencil, TicketPlus, CalendarClock, } from 'lucide-react';
-=======
-import { Search, TicketX, Pencil, TicketPlus, } from 'lucide-react';
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
 import { Movie } from '../types';
 import { useNavigate } from 'react-router';
 
@@ -23,11 +19,7 @@ export default function ManageMovies() {
             .then(res => res.json())
             .then(data => {
                 const mapped = data.movies.map((m: any) => ({
-<<<<<<< HEAD
                     id: m.movie_id,
-=======
-                    id: m.id,
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                     title: m.title,
                     genre: m.genre,
                     rating: m.rating,
@@ -35,12 +27,6 @@ export default function ManageMovies() {
                     poster_url: m.poster_url,
                     trailer_url: m.trailer_url,
                     status: m.status,
-<<<<<<< HEAD
-=======
-                    isEditable: m.isEditable,
-                    editUrl: m.editUrl,
-                    actions: m.actions,
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                 }));
                 setMovies(mapped);
                 setLoading(false);
@@ -95,29 +81,10 @@ export default function ManageMovies() {
                             {genres.map(genre => (
                                 <option key={genre} value={genre}>{genre}</option>
                             ))}
-<<<<<<< HEAD
                         </select>    
                     </div>
                 </div>
                 
-=======
-                        </select>
-                    </div>
-                </div>
-
-            </div>
-
-            {/*Menu Option Grid*/}
-            <div className="bg-white border-t border-gray-200 shadow-sm">
-                <div className="container mx-auto px-4 py-8 flex justify-center">
-                    <div className="bg-gray-50 p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
-                        <button onClick={() => navigate('/add-movies')} className="w-full text-left">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2"><TicketPlus />Add Movies</h3>
-                            <p className="text-gray-500 text-sm">Add a movie to the database</p>
-                        </button>
-                    </div>
-                </div>
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
             </div>
 
             <div className="container mx-auto px-4 py-8">
@@ -145,7 +112,6 @@ export default function ManageMovies() {
                     ) : filteredMovies.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {filteredMovies.map(movie => (
-<<<<<<< HEAD
                                 /*Instead of routing to '/movie' (For normal users), clicking on a movie will now
                                 * route to /admin/manage-movies/admin-movie, where the admin can add/manage showtimes directly.
                                 */
@@ -153,9 +119,6 @@ export default function ManageMovies() {
                                     <MovieCard movie={movie} isAdmin={true} />
                                 </div>
                                 
-=======
-                                <MovieCard key={movie.id} movie={movie} />
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                             ))}
                         </div>
                     ) : (
@@ -166,7 +129,6 @@ export default function ManageMovies() {
                 </div>
 
                 <div>
-<<<<<<< HEAD
                     {/*Menu Option Grid*/}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-20 mb-15">
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
@@ -195,8 +157,6 @@ export default function ManageMovies() {
                         </div>
 
                     </div>
-=======
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
                 </div>
             </div>
         </div>

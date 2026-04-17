@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Star, Heart, Edit3 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { Movie } from '../types';
 
 interface MovieCardProps {
@@ -58,7 +58,6 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
   };
 
   return (
-<<<<<<< HEAD
     //Route to the admin's movie management page if user is an admin. Route to normal user movie page otherwise.
     <Link 
       to={isAdmin ? 
@@ -67,9 +66,6 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
         `/movie/${movie.id}`
       }
     >
-=======
-    <div onClick={handleClick} className="group cursor-pointer">
->>>>>>> e0ec647a77dc228ef691316dbe0b3406a065c948
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
@@ -120,7 +116,7 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmi
             {movie.genre}
           </div>
         </div>
-      </div>
     </div>
+    </Link>
   );
 }

@@ -72,11 +72,7 @@ export const router = createBrowserRouter([
         Component: AdminRoute,
         children: [{ index: true, Component: AddMovies }],
       },
-      {
-        path: 'edit-movies/:id',
-        Component: AdminRoute,
-        children: [{ index: true, Component: EditMovie }],
-      },
+
       {
         path: 'manage-showtimes',
         Component: AdminRoute,
