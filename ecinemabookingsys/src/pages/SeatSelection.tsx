@@ -58,7 +58,7 @@ export default function SeatSelection() {
       .then(data => {
         const m = data.movie;
         setMovie({
-          id: m.movie_id,
+          id: m.id,
           title: m.title,
           genre: m.genre,
           rating: m.rating,

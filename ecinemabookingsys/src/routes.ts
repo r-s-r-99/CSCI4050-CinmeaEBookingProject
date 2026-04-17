@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { Layout } from './components/layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import Home from './pages/Home';
 import MovieDetail from './pages/MovieDetail';
 import TicketSelection from './pages/TicketSelection';
@@ -22,6 +23,10 @@ import Register from './pages/Register';
 import AdminHome from './pages/AdminHome';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ManageMovies from './pages/ManageMovies';
+import AddMovies from './pages/AddMovies';
+import EditMovie from './pages/EditMovie';
+import ManageShowtimes from './pages/ManageShowtimes';
 
 
 export const router = createBrowserRouter([
@@ -44,8 +49,28 @@ export const router = createBrowserRouter([
       { path: 'forgot-password', Component: ForgotPassword },
       { path: 'reset-password', Component: ResetPassword },
       {
+        path: 'manage-movies',
+        Component: AdminRoute,
+        children: [{ index: true, Component: ManageMovies }],
+      },
+      {
+        path: 'add-movies',
+        Component: AdminRoute,
+        children: [{ index: true, Component: AddMovies }],
+      },
+      {
+        path: 'edit-movies/:id',
+        Component: AdminRoute,
+        children: [{ index: true, Component: EditMovie }],
+      },
+      {
+        path: 'manage-showtimes',
+        Component: AdminRoute,
+        children: [{ index: true, Component: ManageShowtimes }],
+      },
+      {
         path: 'settings',
-        Component: ProtectedRoute,   
+        Component: ProtectedRoute,
         children: [
           {
             Component: SettingsLayout,

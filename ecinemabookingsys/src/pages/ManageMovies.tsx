@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { MovieCard } from '../components/MovieCard';
-import { Search } from 'lucide-react';
+import { Search, TicketX, Pencil, TicketPlus, } from 'lucide-react';
 import { Movie } from '../types';
+import { useNavigate } from 'react-router';
 
 type StatusFilter = 'Now Showing' | 'Coming Soon';
 
-export default function Home() {
+export default function ManageMovies() {
+    const navigate = useNavigate();
     const [movies, setMovies] = useState<Movie[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('Now Showing');
@@ -38,16 +40,6 @@ export default function Home() {
             });
     }, []);
 
-    const [favoritedIds, setFavoritedIds] = useState<Set<number>>(new Set());
-
-    useEffect(() => {
-        fetch('/api/retrieve-favorites', { credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                const ids = new Set<number>(data.favorites.map((f: any) => f.movie_id as number));
-                setFavoritedIds(ids);
-            });
-    }, []);
 
     const genres = ['All', ...Array.from(new Set(movies.map(m => m.genre)))];
 
@@ -72,8 +64,7 @@ export default function Home() {
             >
 
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-white text-center">
-                    <h1 className="text-5xl mb-4">Book Your Movie Experience</h1>
-                    <p className="text-xl mb-8">Choose from the latest blockbusters and timeless classics</p>
+                    <h1 className="text-5xl mb-4">Manage Movies Here</h1>
                     <div className="w-full max-w-2xl relative flex gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white w-5 h-5" />
@@ -94,6 +85,19 @@ export default function Home() {
                                 <option key={genre} value={genre}>{genre}</option>
                             ))}
                         </select>
+                    </div>
+                </div>
+
+            </div>
+
+            {/*Menu Option Grid*/}
+            <div className="bg-white border-t border-gray-200 shadow-sm">
+                <div className="container mx-auto px-4 py-8 flex justify-center">
+                    <div className="bg-gray-50 p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                        <button onClick={() => navigate('/add-movies')} className="w-full text-left">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2"><TicketPlus />Add Movies</h3>
+                            <p className="text-gray-500 text-sm">Add a movie to the database</p>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -123,7 +127,7 @@ export default function Home() {
                     ) : filteredMovies.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {filteredMovies.map(movie => (
-                                <MovieCard key={movie.id} movie={movie} isFavorited={favoritedIds.has(movie.id)} />
+                                <MovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
                     ) : (
@@ -131,6 +135,9 @@ export default function Home() {
                             No movies found.
                         </div>
                     )}
+                </div>
+
+                <div>
                 </div>
             </div>
         </div>

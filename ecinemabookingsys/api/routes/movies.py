@@ -1,50 +1,279 @@
-from flask import Blueprint
+from flask import Blueprint, request, jsonify, session
 from db import get_db
+from repositories.movie_repository import MovieRepository
+from models.movie import Movie
+from services.movie_decorator import MovieDecorator
 import pandas as pd
 
 movies_bp = Blueprint('movies', __name__)
+movie_repo = MovieRepository()
+movie_decorator = MovieDecorator(movie_repo)
+
+@movies_bp.route('/api/movies', methods=['POST'])
+def create_movie():
+    """
+    Create a new movie (admin only).
+
+    Route handler: Thin request/response adapter
+    Business logic: Handled by MovieRepository
+    """
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Check if user is admin
+    from db import get_db
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+            user = cursor.fetchone()
+        if not user or user.get('role') != 'admin':
+            return jsonify({'error': 'Only admins can create movies'}), 403
+    finally:
+        conn.close()
+
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['title', 'genre', 'description', 'poster_url', 'status']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': f'Missing required fields: {", ".join(required_fields)}'}), 400
+
+        # Create Movie domain object
+        movie = Movie(
+            movie_id=None,  # Will be generated
+            title=data['title'],
+            genre=data['genre'],
+            rating=data.get('rating', ''),
+            description=data['description'],
+            poster_url=data['poster_url'],
+            trailer_url=data.get('trailer_url', ''),
+            status=data['status']
+        )
+
+        # Save movie via repository
+        saved_movie = movie_repo.save(movie)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Movie created successfully',
+            'movie_id': saved_movie.movie_id,
+            'movie': saved_movie.to_dict()
+        }), 201
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        print(f"[MOVIE] Error creating movie: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @movies_bp.route('/api/movies')
 def get_movies():
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM Movie") 
-        home_movies = cursor.fetchall()
-    conn.close()
-    return {"movies": home_movies}
+    """Get all movies with role-specific decoration."""
+    user_role = None
+    if 'user_id' in session:
+        conn = get_db()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                user_role = user.get('role') if user else None
+        finally:
+            conn.close()
 
-@movies_bp.route('/api/movies/<int:movie_id>')
-def get_movies_details(movie_id):
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM Movie WHERE movie_id = %s", (movie_id,))
-        movie = cursor.fetchone()
-    conn.close()
-    return {"movie": movie}
+    all_movies = movie_repo.find_all()
+    decorated_movies = movie_decorator.get_decorated_movies(all_movies, user_role)
+    return {"movies": decorated_movies}
+
 
 @movies_bp.route('/api/movies/now-showing')
 def get_now_showing():
+    """Get movies currently showing."""
+    user_role = None
+    if 'user_id' in session:
+        conn = get_db()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                user_role = user.get('role') if user else None
+        finally:
+            conn.close()
+
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM Movie WHERE status = 'Currently Running'")
-        movies = cursor.fetchall()
+        cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Currently Running'")
+        rows = cursor.fetchall()
     conn.close()
-    return {"movies": movies}
+
+    movies = [Movie(
+        movie_id=row['movie_id'],
+        title=row['title'],
+        genre=row['genre'],
+        rating=row['rating'],
+        description=row['description'],
+        poster_url=row['poster_url'],
+        trailer_url=row['trailer_url'],
+        status=row['status']
+    ) for row in rows]
+
+    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role)
+    return {"movies": decorated_movies}
+
 
 @movies_bp.route('/api/movies/coming-soon')
 def get_coming_soon():
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM Movie WHERE status = 'Coming Soon'")
-        movies = cursor.fetchall()
-    conn.close()
-    return {"movies": movies}
+    """Get movies coming soon."""
+    user_role = None
+    if 'user_id' in session:
+        conn = get_db()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                user_role = user.get('role') if user else None
+        finally:
+            conn.close()
 
-@movies_bp.route('/api/movies/<string:genre>')
-def get_movies_by_genre(genre):
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM Movie WHERE genre = %s", (genre,))
-        movies = cursor.fetchall()
+        cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Coming Soon'")
+        rows = cursor.fetchall()
     conn.close()
-    return {"movies": movies}
+
+    movies = [Movie(
+        movie_id=row['movie_id'],
+        title=row['title'],
+        genre=row['genre'],
+        rating=row['rating'],
+        description=row['description'],
+        poster_url=row['poster_url'],
+        trailer_url=row['trailer_url'],
+        status=row['status']
+    ) for row in rows]
+
+    decorated_movies = movie_decorator.get_decorated_movies(movies, user_role)
+    return {"movies": decorated_movies}
+
+
+@movies_bp.route('/api/movies/<int:movie_id>')
+def get_movies_details(movie_id):
+    """Get single movie with role-specific decoration."""
+    user_role = None
+    if 'user_id' in session:
+        conn = get_db()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                user_role = user.get('role') if user else None
+        finally:
+            conn.close()
+
+    decorated_movie = movie_decorator.get_decorated_movie(movie_id, user_role)
+    if not decorated_movie:
+        return jsonify({'error': 'Movie not found'}), 404
+    return {"movie": decorated_movie}
+
+
+@movies_bp.route('/api/movies/<int:movie_id>', methods=['DELETE'])
+def delete_movie(movie_id):
+    """
+    Delete a movie (admin only).
+
+    Route handler: Thin request/response adapter
+    Business logic: Handled by MovieRepository
+    """
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Check if user is admin
+    from db import get_db
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+            user = cursor.fetchone()
+        if not user or user.get('role') != 'admin':
+            return jsonify({'error': 'Only admins can delete movies'}), 403
+    finally:
+        conn.close()
+
+    try:
+        # Find existing movie
+        existing_movie = movie_repo.find_by_id(movie_id)
+        if not existing_movie:
+            return jsonify({'error': 'Movie not found'}), 404
+
+        # Delete movie via repository
+        movie_repo.delete(existing_movie)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Movie deleted successfully',
+        }), 200
+
+    except Exception as e:
+        print(f"[MOVIE] Error deleting movie: {e}")
+        return jsonify({'error': str(e)}), 500
+
+    """
+    Update an existing movie (admin only).
+
+    Route handler: Thin request/response adapter
+    Business logic: Handled by MovieRepository
+    """
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Check if user is admin
+    from db import get_db
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
+            user = cursor.fetchone()
+        if not user or user.get('role') != 'admin':
+            return jsonify({'error': 'Only admins can update movies'}), 403
+    finally:
+        conn.close()
+
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['title', 'genre', 'description', 'poster_url', 'status']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': f'Missing required fields: {", ".join(required_fields)}'}), 400
+
+        # Find existing movie
+        existing_movie = movie_repo.find_by_id(movie_id)
+        if not existing_movie:
+            return jsonify({'error': 'Movie not found'}), 404
+
+        # Update Movie domain object
+        existing_movie.title = data['title']
+        existing_movie.genre = data['genre']
+        existing_movie.rating = data.get('rating', existing_movie.rating)
+        existing_movie.description = data['description']
+        existing_movie.poster_url = data['poster_url']
+        existing_movie.trailer_url = data.get('trailer_url', existing_movie.trailer_url)
+        existing_movie.status = data['status']
+
+        # Save updated movie via repository
+        updated_movie = movie_repo.save(existing_movie)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Movie updated successfully',
+            'movie_id': updated_movie.movie_id,
+            'movie': updated_movie.to_dict()
+        }), 200
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        print(f"[MOVIE] Error updating movie: {e}")
+        return jsonify({'error': str(e)}), 500

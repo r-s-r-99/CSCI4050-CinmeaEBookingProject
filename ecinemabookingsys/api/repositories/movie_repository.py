@@ -44,7 +44,6 @@ class MovieRepository(CRUDRepository):
         query = """
             SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status
             FROM Movie
-            WHERE status = 'showing'
             ORDER BY title
         """
 
