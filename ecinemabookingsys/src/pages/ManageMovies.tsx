@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MovieCard } from '../components/MovieCard';
-import { Search, TicketX, Pencil, TicketPlus, } from 'lucide-react';
+import { Search, TicketX, Pencil, TicketPlus, CalendarClock, } from 'lucide-react';
 import { Movie } from '../types';
 import { useNavigate } from 'react-router';
 
@@ -112,7 +112,13 @@ export default function ManageMovies() {
                     ) : filteredMovies.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {filteredMovies.map(movie => (
-                                <MovieCard key={movie.id} movie={movie} />
+                                /*Instead of routing to '/movie' (For normal users), clicking on a movie will now
+                                * route to /admin/manage-movies/admin-movie, where the admin can add/manage showtimes directly.
+                                */
+                                <div key={movie.id}>
+                                    <MovieCard movie={movie} isAdmin={true} />
+                                </div>
+                                
                             ))}
                         </div>
                     ) : (
@@ -124,7 +130,7 @@ export default function ManageMovies() {
 
                 <div>
                     {/*Menu Option Grid*/}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-20 mb-15">
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                             <button onClick={() => navigate('/admin/manage-movies/add-movies')}>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2"><TicketPlus />Add Movies</h3>
@@ -140,6 +146,14 @@ export default function ManageMovies() {
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                             <h3 className="text-xl font-bold text-gray-900 mb-2"><TicketX />Delete Movies</h3>
                             <p className="text-gray-500 text-sm">Delete currently offered movies</p>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                            <button onClick={() => navigate('/admin/manage-movies/manage-showtimes')}>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2"><CalendarClock />Manage Showtimes</h3>
+                                <p className="text-gray-500 text-sm">Manage current showtimes of movies</p>
+                            </button>
+                            
                         </div>
 
                     </div>

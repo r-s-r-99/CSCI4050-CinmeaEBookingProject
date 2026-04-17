@@ -6,9 +6,10 @@ import { Movie } from '../types';
 interface MovieCardProps {
   movie: Movie;
   isFavorited?: boolean;
+  isAdmin?: Boolean;
 }
 
-export function MovieCard({ movie, isFavorited: initialFavorited = false }: MovieCardProps) {
+export function MovieCard({ movie, isFavorited: initialFavorited = false, isAdmin = false }: MovieCardProps) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,7 +41,14 @@ export function MovieCard({ movie, isFavorited: initialFavorited = false }: Movi
 
 
   return (
-    <Link to={`/movie/${movie.id}`} className="group">
+    //Route to the admin's movie management page if user is an admin. Route to normal user movie page otherwise.
+    <Link 
+      to={isAdmin ? 
+        `/admin/manage-movies/admin-movie/${movie.id}`
+        :
+        `/movie/${movie.id}`
+      }
+    >
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <div className="relative aspect-[2/3] overflow-hidden">
           <img

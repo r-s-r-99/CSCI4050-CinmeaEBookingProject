@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request, jsonify
 from db import get_db
 import pandas as pd
 
@@ -48,3 +48,28 @@ def get_movies_by_genre(genre):
         movies = cursor.fetchall()
     conn.close()
     return {"movies": movies}
+
+@movies_bp.route('/api/movies', methods=['POST'])
+def add_movie():
+    data = request.get_json()
+    conn = get_db()
+
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO Movie (title, genre, rating, description, poster_url, trailer_url, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            data.get('title'),
+            data.get('genre'),
+            data.get('rating'),
+            data.get('description'),
+            data.get('poster_url'),
+            data.get('trailer_url'),
+            data.get('status'),
+        ))
+    conn.commit()
+    conn.close()
+    return {"message": "Movie successfully added"}
+
+
+

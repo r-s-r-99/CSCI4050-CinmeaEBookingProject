@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, request, jsonify
 from db import get_db
 
 showtimes_bp = Blueprint('showtimes', __name__)
@@ -39,3 +39,32 @@ def get_showtimes(movie_id):
 
     return {"showtimes": showtimes}
 
+@showtimes_bp.route('/api/showtimes/<int:showtime_id>', methods=['DELETE'])
+def delete_showtime(showtime_id):
+    conn = get_db()
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM Showtime WHERE showtime_id = %s", (showtime_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "Showtime successfully deleted"}
+
+@showtimes_bp.route('/api/showtimes', methods=['POST'])
+def add_showtime():
+    data = request.get_json()
+    conn = get_db()
+
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO Showtime (movie_id, room_id, show_date, show_time)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            data.get('movie_id'),
+            data.get('room_id'),
+            data.get('show_date'),
+            data.get('show_time'),
+        ))
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "The showtime was successfully added."}, 201
