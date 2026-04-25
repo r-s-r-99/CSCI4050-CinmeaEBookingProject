@@ -28,6 +28,27 @@ def require_admin():
     return True, None
 
 
+@showtimes_bp.route('/api/showtimes/detail/<int:showtime_id>')
+def get_showtime_detail(showtime_id):
+    """Get a single showtime's details."""
+    try:
+        showtime = showtime_service.showtime_repo.find_by_id(showtime_id)
+        if not showtime:
+            return jsonify({'error': 'Showtime not found'}), 404
+
+        decorated = showtime_service.get_all_showtimes_decorated()
+        # Find the matching showtime in decorated list
+        matching = next((st for st in decorated if st['showtime_id'] == showtime_id), None)
+
+        if not matching:
+            return jsonify({'error': 'Showtime not found'}), 404
+
+        return jsonify({'showtime': matching}), 200
+    except Exception as e:
+        print(f"[SHOWTIME] Error fetching showtime detail {showtime_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @showtimes_bp.route('/api/showtimes/<int:movie_id>')
 def get_showtimes_by_movie(movie_id):
     """Get all showtimes for a specific movie."""
