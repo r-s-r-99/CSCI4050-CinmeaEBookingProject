@@ -103,6 +103,15 @@ export default function SeatSelection() {
           setValidationError('');
           return { ...seat, status: 'available' };
         } else {
+          // Check if we've already selected the maximum number of seats
+          if (requiredTickets.length > 0) {
+            const selectedSeatsCount = Object.keys(seatCategories).length;
+            if (selectedSeatsCount >= requiredTickets.length) {
+              setValidationError(`You can only select ${requiredTickets.length} seat(s). You've already selected the maximum.`);
+              return seat; // Don't allow selection
+            }
+          }
+
           // Determine which category to assign
           let categoryToAssign = selectedCategory;
 
@@ -122,8 +131,6 @@ export default function SeatSelection() {
             const willHaveCount = Object.keys(seatCategories).length + 1;
             if (willHaveCount === requiredTickets.length) {
               setValidationError('');
-            } else if (willHaveCount > requiredTickets.length) {
-              setValidationError(`You've selected too many seats. You need ${requiredTickets.length} ticket(s).`);
             }
           }
 
