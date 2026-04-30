@@ -50,7 +50,7 @@ export default function SeatSelection() {
           movieId: String(s.movie_id),
           date: new Date(s.show_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
           time: s.show_time,
-          theater: 'Main Theater',
+          theater: `Showroom ${s.room_id}`,
         });
         return fetch(`/api/movies/${s.movie_id}`);
       })
