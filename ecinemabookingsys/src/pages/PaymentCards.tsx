@@ -69,6 +69,7 @@ export default function PaymentCards() {
   const handleAddCard = () => {
     if (cards.length < 3) {
       setCards([...cards, emptyCard()]);
+      setSaved(false);
     }
   };
 
@@ -90,6 +91,7 @@ export default function PaymentCards() {
     }
 
     setCards(cards.filter(c => c.id !== id));
+    setSaved(false);
   };
 
   const handleCardChange = (id: number, field: keyof PaymentCardForm, value: string) => {
@@ -113,6 +115,7 @@ export default function PaymentCards() {
     setCards(cards.map(card =>
       card.id === id ? { ...card, [field]: value } : card
     ));
+    setSaved(false);
   };
 
   const fetchCards = async (): Promise<PaymentCardForm[]> => {
@@ -160,7 +163,6 @@ export default function PaymentCards() {
       // 3. Re-fetch to sync real DB state
       await fetchCards();
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save cards:', err);
     } finally {
@@ -196,7 +198,9 @@ export default function PaymentCards() {
       </div>
 
       {/* Card count indicator */}
-      <p className="text-sm text-gray-500 mb-6">{cards.length} of 3 cards saved</p>
+      <p className={`text-sm mb-6 transition-colors ${saved ? 'text-green-600' : 'text-gray-500'}`}>
+        {cards.length} of 3 cards saved
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {cards.map((card, index) => (
@@ -282,7 +286,7 @@ export default function PaymentCards() {
         ))}
 
         {/* Save button */}
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-4 pb-8">
           <button
             type="submit"
             disabled={isSaving}

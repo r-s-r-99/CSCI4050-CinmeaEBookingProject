@@ -91,12 +91,21 @@ class PaymentCardRepository(CRUDRepository):
         from models.payment_card import PaymentCard
 
         # Handle both PaymentCard objects and dicts
-        card_id = getattr(card, 'card_id', None) or card.get('card_id')
-        user_id = getattr(card, 'user_id', None) or card.get('user_id')
-        card_name = getattr(card, 'card_name', None) or card.get('card_name')
-        card_number = getattr(card, 'card_number', None) or card.get('card_number')
-        cvv = getattr(card, 'cvv', None) or card.get('cvv')
-        expiration_date = getattr(card, 'expiration_date', None) or card.get('expiration_date')
+        if isinstance(card, dict):
+            card_id = card.get('card_id')
+            user_id = card.get('user_id')
+            card_name = card.get('card_name')
+            card_number = card.get('card_number')
+            cvv = card.get('cvv')
+            expiration_date = card.get('expiration_date')
+        else:
+            # PaymentCard object
+            card_id = card.card_id
+            user_id = card.user_id
+            card_name = card.card_name
+            card_number = card.card_number
+            cvv = card.cvv
+            expiration_date = card.expiration_date
 
         if card_id:
             # Update
@@ -150,8 +159,13 @@ class PaymentCardRepository(CRUDRepository):
 
         Returns: True if successful
         """
-        card_id = getattr(card, 'card_id', None) or card.get('card_id')
-        user_id = getattr(card, 'user_id', None) or card.get('user_id')
+        if isinstance(card, dict):
+            card_id = card.get('card_id')
+            user_id = card.get('user_id')
+        else:
+            # PaymentCard object
+            card_id = card.card_id
+            user_id = card.user_id
 
         query = "DELETE FROM PaymentCard WHERE card_id = %s AND user_id = %s"
         self.execute_update(query, (card_id, user_id))
