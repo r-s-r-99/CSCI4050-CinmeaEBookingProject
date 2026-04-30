@@ -82,7 +82,7 @@ export function Bookings() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl mb-8">My Bookings</h1>
+        <h1 className="text-3xl mb-8">Order History</h1>
 
         <div className="space-y-6">
           {bookings.map(booking => (
@@ -151,11 +151,42 @@ export function Bookings() {
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="text-sm text-gray-600">
-                      Booked on {new Date(booking.bookingDate).toLocaleDateString()}
+                    <div>
+                      <div className="text-sm text-gray-600 mb-3">
+                        Booked on {new Date(booking.bookingDate).toLocaleDateString()}
+                      </div>
+                      {/* Pricing Breakdown */}
+                      <div className="text-sm space-y-1">
+                        {booking.tickets && booking.tickets.length > 0 && (() => {
+                          const ticketsByCategory: Record<string, { count: number; price: number }> = {};
+                          const TICKET_PRICES: Record<string, number> = { adult: 12, senior: 8, child: 6 };
+
+                          booking.tickets.forEach((t: any) => {
+                            // Use ticketType if available, otherwise default to adult
+                            const category = t.ticketType || t.category || 'adult';
+                            if (!ticketsByCategory[category]) {
+                              ticketsByCategory[category] = { count: 0, price: TICKET_PRICES[category] || 12 };
+                            }
+                            ticketsByCategory[category].count += 1;
+                          });
+
+                          return (
+                            <>
+                              {Object.entries(ticketsByCategory).map(([category, data]) => (
+                                <div key={category} className="text-gray-600 capitalize">
+                                  {data.count}x {category} @ ${data.price}/each = ${(data.count * data.price).toFixed(2)}
+                                </div>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
-                    <div className="text-2xl text-red-600">
-                      ${booking.totalPrice.toFixed(2)}
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600 mb-2">Total</div>
+                      <div className="text-2xl font-bold text-red-600">
+                        ${booking.totalPrice.toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 </div>

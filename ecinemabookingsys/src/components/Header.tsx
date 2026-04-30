@@ -58,7 +58,7 @@ export function Header() {
                 }`}
             >
               <Ticket className="w-5 h-5" />
-              <span>My Bookings</span>
+              <span>My Order History</span>
             </Link>
 
             {auth.isLoggedIn && auth.role === 'admin' && (
