@@ -70,6 +70,10 @@ def process_payment():
 
     Route handler: Thin request/response adapter
     Business logic: Handled by BookingService and EmailService
+
+    Accepts either:
+    - card_data: New card information
+    - card_id: ID of a saved card from user's account
     """
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -77,14 +81,19 @@ def process_payment():
     try:
         data = request.get_json()
 
-        if 'temp_booking_token' not in data or 'card_data' not in data:
-            return jsonify({'error': 'Missing booking token or card data'}), 400
+        if 'temp_booking_token' not in data:
+            return jsonify({'error': 'Missing booking token'}), 400
 
         token = data['temp_booking_token']
-        card_data = data['card_data']
+        card_data = data.get('card_data')
+        card_id = data.get('card_id')
+
+        # Validate that either card_data or card_id is provided
+        if not card_data and not card_id:
+            return jsonify({'error': 'Missing card data or card ID'}), 400
 
         # Validate card data
-        booking_service.process_payment(token, card_data)
+        booking_service.process_payment(token, card_data, card_id, session['user_id'])
 
         # Get booking data from session (for email details)
         temp_booking = session.get('temp_booking')

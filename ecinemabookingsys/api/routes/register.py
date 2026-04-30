@@ -1,153 +1,75 @@
-from flask import Blueprint, request, jsonify
-from db import get_db
-import bcrypt
-import secrets
-from datetime import datetime, timedelta
-from email_utils import send_confirmation_email
-from flask import redirect
-
-from cryptography.fernet import Fernet
+from flask import Blueprint, request, jsonify, redirect
 import os
-
-fernet = Fernet(os.environ.get('ENCRYPTION_KEY').encode())
-
-def encrypt(value: str) -> str:
-    return fernet.encrypt(value.encode()).decode()
+from services.registration_service import RegistrationService
 
 register_bp = Blueprint('register', __name__)
+registration_service = RegistrationService()
+
 
 @register_bp.route('/api/register', methods=['POST'])
 def registration():
-    data = request.get_json()
-
-    # Required fields
-    email = data.get('email')
-    password = data.get('password')
-    first_name = data.get('firstName')
-    last_name = data.get('lastName')
-    phone_number = data.get('phoneNumber', None)
-
-    # Optional fields
-    promo_subscribed = data.get('promotions', False)
-
-    # Optional mailing address
-    address = data.get('address', None)
-    zip_code = data.get('zipCode', None)
-    house_number = data.get('houseNumber', None)
-    apt_number = data.get('aptNumber', None)
-    city = data.get('city', None)
-    state = data.get('state', None)
-
-    # Optional payment cards (list)
-    payment_cards = data.get('paymentCards', [])
-
-    # Basic validation
-    if not all([email, password, phone_number, first_name, last_name]):
-        return jsonify({ 'error': 'Email, password, phone, first name and last name are required.' }), 400
-
-    conn = get_db()
+    """Register a new user with optional address and payment cards."""
     try:
-        with conn.cursor() as cursor:
-            # Check if email already exists
-            cursor.execute("SELECT user_id FROM User WHERE email = %s", (email,))
-            if cursor.fetchone():
-                return jsonify({ 'error': 'Email already registered.' }), 409
+        data = request.get_json()
 
-            # Hash the password
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        # Extract required fields
+        email = data.get('email')
+        password = data.get('password')
+        first_name = data.get('firstName')
+        last_name = data.get('lastName')
+        phone_number = data.get('phoneNumber')
+        promo_subscribed = data.get('promotions', False)
 
-            # Insert user
-            cursor.execute("""
-                INSERT INTO User (email, password, first_name, last_name, phone_number, promo_subscribed, account_status)
-                VALUES (%s, %s, %s, %s, %s, %s, 'Inactive')
-            """, (email, hashed_password, first_name, last_name, phone_number, promo_subscribed))
+        # Extract optional address fields
+        address_data = {
+            'address': data.get('address'),
+            'zip_code': data.get('zipCode'),
+            'house_number': data.get('houseNumber'),
+            'apt_number': data.get('aptNumber'),
+            'city': data.get('city'),
+            'state': data.get('state'),
+        }
 
-            user_id = cursor.lastrowid
+        # Extract optional payment cards
+        payment_cards = data.get('paymentCards', [])
 
-            # Insert mailing address if any address field is provided
-            if any([address, zip_code, house_number, apt_number, city, state]):
-                cursor.execute("""
-                    INSERT INTO MailingAddress (user_id, house_number, street, apt, zip)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, house_number, address, apt_number, zip_code))
+        # Register user
+        result = registration_service.register_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number,
+            promo_subscribed=promo_subscribed,
+            address_data=address_data,
+            payment_cards=payment_cards
+        )
 
-            # Insert payment cards (max 3)
-            for card in payment_cards[:3]:
-                card_number = card.get('cardNumber', '').replace(' ', '')  # strip spaces
-                card_name = card.get('cardName', '')
-                expiry = card.get('expiryDate', '')                        # MM/YY
-                cvv = card.get('cvv', '')
-                # Convert MM/YY to a DATE (YYYY-MM-DD) for MySQL
-                if expiry and '/' in expiry:
-                    month, year = expiry.split('/')
-                    expiration_date = f"20{year}-{month}-01"
-                else:
-                    expiration_date = None
-
-                cursor.execute("""
-                    INSERT INTO PaymentCard (user_id, card_name, card_number, expiration_date, cvv)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, card_name, encrypt(card_number), expiration_date, encrypt(cvv)))
-
-            # Generate confirmation token
-            token = secrets.token_urlsafe(32)
-            expires_at = datetime.utcnow() + timedelta(hours=24)
-
-            cursor.execute("""
-                INSERT INTO PasswordResetToken (user_id, token, expires_at, type)
-                VALUES (%s, %s, %s, 'email_confirmation')
-            """, (user_id, token, expires_at))
-
-            conn.commit()
-
-            # Send confirmation email
-            send_confirmation_email(email, first_name, token)
-
-            return jsonify({ 'message': 'Registration successful. Please check your email to activate your account.' }), 201
+        if result['success']:
+            return jsonify({
+                'message': 'Registration successful. Please check your email to activate your account.'
+            }), 201
+        else:
+            # Check if it's a duplicate email error
+            if 'already registered' in result['error']:
+                return jsonify({'error': result['error']}), 409
+            return jsonify({'error': result['error']}), 400
 
     except Exception as e:
-        conn.rollback()
-        return jsonify({ 'error': str(e) }), 500
-    finally:
-        conn.close()
-        
+        return jsonify({'error': str(e)}), 500
+
+
 @register_bp.route('/api/confirm-email/<token>', methods=['GET'])
 def confirm_email(token):
-    conn = get_db()
+    """Confirm user email with token."""
     try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT user_id, expires_at, used 
-                FROM PasswordResetToken 
-                WHERE token = %s AND type = 'email_confirmation'
-            """, (token,))
-            record = cursor.fetchone()
+        result = registration_service.confirm_email(token)
 
-            if not record:
-                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=invalid_token")
-
-            if record['used']:
-                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=link_used")
-
-            if datetime.utcnow() > record['expires_at']:
-                return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=link_expired")
-
-            cursor.execute("""
-                UPDATE User SET account_status = 'Active' 
-                WHERE user_id = %s
-            """, (record['user_id'],))
-
-            cursor.execute("""
-                UPDATE PasswordResetToken SET used = TRUE 
-                WHERE token = %s
-            """, (token,))
-
-            conn.commit()
-
+        if result['success']:
             return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?confirmed=true")
+        else:
+            error_code = result['error']
+            return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error={error_code}")
 
     except Exception as e:
-        conn.rollback()
         return redirect(f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/login?error=server_error")
-    finally:
-        conn.close()

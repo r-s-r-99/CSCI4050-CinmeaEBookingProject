@@ -1,31 +1,13 @@
-from flask import Blueprint, request, jsonify, session
-from db import get_db
+from flask import Blueprint, request, jsonify
 from services.showtime_service import ShowtimeService
+from services.showroom_service import ShowroomService
 from repositories.movie_repository import MovieRepository
-from repositories.showroom_repository import ShowroomRepository
+from utils.auth import require_admin
 
 showtimes_bp = Blueprint('showtimes', __name__)
 showtime_service = ShowtimeService()
+showroom_service = ShowroomService()
 movie_repo = MovieRepository()
-showroom_repo = ShowroomRepository()
-
-
-def require_admin():
-    """Check if user is admin. Returns (is_admin, error_response)."""
-    if 'user_id' not in session:
-        return False, (jsonify({'error': 'Unauthorized'}), 401)
-
-    conn = get_db()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-        if not user or user.get('role') != 'admin':
-            return False, (jsonify({'error': 'Only admins can manage showtimes'}), 403)
-    finally:
-        conn.close()
-
-    return True, None
 
 
 @showtimes_bp.route('/api/showtimes/detail/<int:showtime_id>')
@@ -88,7 +70,6 @@ def check_conflict():
             return jsonify({'error': 'Missing required fields'}), 400
 
         result = showtime_service.check_conflict(room_id, show_date, show_time)
-
         return jsonify(result), 200
 
     except Exception as e:
@@ -137,17 +118,8 @@ def create_showtime():
 def get_showrooms():
     """Get all available showrooms."""
     try:
-        showrooms = showroom_repo.get_all()
-        decorated = [
-            {
-                'room_id': sr.room_id,
-                'room_number': sr.room_number,
-                'number_of_seats': sr.number_of_seats,
-            }
-            for sr in showrooms
-        ]
-        return jsonify({'showrooms': decorated}), 200
-
+        showrooms = showroom_service.get_all_showrooms_decorated()
+        return jsonify({'showrooms': showrooms}), 200
     except Exception as e:
         print(f"[SHOWROOM] Error fetching showrooms: {e}")
         return jsonify({'error': str(e)}), 500
@@ -167,7 +139,7 @@ def get_movies_for_showtimes():
             for m in all_movies
         ]
         return jsonify({'movies': decorated}), 200
-
     except Exception as e:
         print(f"[MOVIE] Error fetching movies: {e}")
         return jsonify({'error': str(e)}), 500
+

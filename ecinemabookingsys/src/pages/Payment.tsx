@@ -1,12 +1,20 @@
 import { useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const TICKET_PRICES: Record<string, number> = {
   adult: 12,
   senior: 8,
   child: 6,
 };
+
+interface SavedCard {
+  cardId: number;
+  cardName: string;
+  cardNumber: string;
+  expirationDate: string;
+  cvv: string;
+}
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -23,6 +31,36 @@ export default function Payment() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Saved cards
+  const [usePaymentMode, setUsePaymentMode] = useState<'new' | 'saved'>('new');
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [loadingCards, setLoadingCards] = useState(true);
+
+  // Load saved payment cards on mount
+  useEffect(() => {
+    const loadSavedCards = async () => {
+      try {
+        const response = await fetch('/api/retrieve-payment-cards', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const cards = await response.json();
+          setSavedCards(cards);
+          if (cards.length > 0) {
+            setSelectedCardId(cards[0].cardId);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load saved cards:', err);
+      } finally {
+        setLoadingCards(false);
+      }
+    };
+
+    loadSavedCards();
+  }, []);
+
   const formatCardNumber = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 16);
     return digits.replace(/(\d{4})/g, '$1 ').trim();
@@ -37,6 +75,15 @@ export default function Payment() {
   };
 
   const validateForm = () => {
+    if (usePaymentMode === 'saved') {
+      if (!selectedCardId) {
+        setError('Please select a saved card');
+        return false;
+      }
+      return true;
+    }
+
+    // New card validation
     const cardDigits = cardNumber.replace(/\s/g, '');
     if (cardDigits.length !== 16) {
       setError('Card number must be 16 digits');
@@ -65,19 +112,28 @@ export default function Payment() {
     setError('');
 
     try {
+      let paymentBody: any = {
+        temp_booking_token: token,
+      };
+
+      if (usePaymentMode === 'saved') {
+        // Use saved card
+        paymentBody.card_id = selectedCardId;
+      } else {
+        // Use new card
+        paymentBody.card_data = {
+          cardNumber: cardNumber.replace(/\s/g, ''),
+          expiry,
+          cvc,
+          nameOnCard,
+        };
+      }
+
       const response = await fetch('/api/bookings/process-payment', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          temp_booking_token: token,
-          card_data: {
-            cardNumber: cardNumber.replace(/\s/g, ''),
-            expiry,
-            cvc,
-            nameOnCard,
-          },
-        }),
+        body: JSON.stringify(paymentBody),
       });
 
       if (!response.ok) {
@@ -142,57 +198,113 @@ export default function Payment() {
                   </div>
                 )}
 
-                {/* Card Number */}
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold mb-2">Card Number</label>
-                  <input
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength="19"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Use any 16-digit number for this demo</p>
+                {/* Tabs for new/saved card */}
+                <div className="mb-6 flex gap-4 border-b">
+                  <button
+                    type="button"
+                    onClick={() => setUsePaymentMode('new')}
+                    className={`pb-3 px-2 font-semibold transition-colors ${
+                      usePaymentMode === 'new'
+                        ? 'text-red-600 border-b-2 border-red-600'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    New Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUsePaymentMode('saved')}
+                    disabled={loadingCards || savedCards.length === 0}
+                    className={`pb-3 px-2 font-semibold transition-colors ${
+                      usePaymentMode === 'saved'
+                        ? 'text-red-600 border-b-2 border-red-600'
+                        : 'text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    Saved Cards ({savedCards.length})
+                  </button>
                 </div>
 
-                {/* Expiry & CVC */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Expiry Date</label>
-                    <input
-                      type="text"
-                      placeholder="MM/YY"
-                      maxLength="5"
-                      value={expiry}
-                      onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">CVC</label>
-                    <input
-                      type="text"
-                      placeholder="123"
-                      maxLength="4"
-                      value={cvc}
-                      onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
-                    />
-                  </div>
-                </div>
+                {usePaymentMode === 'saved' ? (
+                  <>
+                    {/* Saved Cards Selection */}
+                    {loadingCards ? (
+                      <div className="text-center py-6 text-gray-500">Loading saved cards...</div>
+                    ) : savedCards.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500">No saved cards available</div>
+                    ) : (
+                      <div className="mb-8">
+                        <label className="block text-sm font-semibold mb-3">Select a Card</label>
+                        <select
+                          value={selectedCardId || ''}
+                          onChange={(e) => setSelectedCardId(Number(e.target.value))}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                        >
+                          {savedCards.map((card) => (
+                            <option key={card.cardId} value={card.cardId}>
+                              {card.cardName} - {card.cardNumber.slice(-4).padStart(16, '*')}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* New Card Form */}
+                    {/* Card Number */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-semibold mb-2">Card Number</label>
+                      <input
+                        type="text"
+                        placeholder="1234 5678 9012 3456"
+                        maxLength="19"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                      />
+                      <p className="text-xs text-gray-500 mt-2">Use any 16-digit number for this demo</p>
+                    </div>
 
-                {/* Name on Card */}
-                <div className="mb-8">
-                  <label className="block text-sm font-semibold mb-2">Name on Card</label>
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    value={nameOnCard}
-                    onChange={(e) => setNameOnCard(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
-                  />
-                </div>
+                    {/* Expiry & CVC */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">Expiry Date</label>
+                        <input
+                          type="text"
+                          placeholder="MM/YY"
+                          maxLength="5"
+                          value={expiry}
+                          onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">CVC</label>
+                        <input
+                          type="text"
+                          placeholder="123"
+                          maxLength="4"
+                          value={cvc}
+                          onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Name on Card */}
+                    <div className="mb-8">
+                      <label className="block text-sm font-semibold mb-2">Name on Card</label>
+                      <input
+                        type="text"
+                        placeholder="John Doe"
+                        value={nameOnCard}
+                        onChange={(e) => setNameOnCard(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <button
                   type="submit"

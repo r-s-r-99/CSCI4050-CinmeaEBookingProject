@@ -1,36 +1,20 @@
-from flask import Blueprint, request, jsonify, session
-from db import get_db
+from flask import Blueprint, request, jsonify
 from repositories.movie_repository import MovieRepository
 from models.movie import Movie
 from services.movie_decorator import MovieDecorator
-import pandas as pd
+from utils.auth import require_admin, get_user_role_from_session
 
 movies_bp = Blueprint('movies', __name__)
 movie_repo = MovieRepository()
 movie_decorator = MovieDecorator(movie_repo)
 
+
 @movies_bp.route('/api/movies', methods=['POST'])
 def create_movie():
-    """
-    Create a new movie (admin only).
-
-    Route handler: Thin request/response adapter
-    Business logic: Handled by MovieRepository
-    """
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    # Check if user is admin
-    from db import get_db
-    conn = get_db()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-        if not user or user.get('role') != 'admin':
-            return jsonify({'error': 'Only admins can create movies'}), 403
-    finally:
-        conn.close()
+    """Create a new movie (admin only)."""
+    is_admin, error_response = require_admin()
+    if not is_admin:
+        return error_response
 
     try:
         data = request.get_json()
@@ -42,7 +26,7 @@ def create_movie():
 
         # Create Movie domain object
         movie = Movie(
-            movie_id=None,  # Will be generated
+            movie_id=None,
             title=data['title'],
             genre=data['genre'],
             rating=data.get('rating', ''),
@@ -74,20 +58,11 @@ def get_movies():
     """Get all movies with role-specific decoration.
 
     Query params:
-    - force_customer_view: If 'true', shows customer view even for admins (useful for home page)
+    - force_customer_view: If 'true', shows customer view even for admins
     """
-    user_role = None
-    if 'user_id' in session:
-        conn = get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-                user = cursor.fetchone()
-                user_role = user.get('role') if user else None
-        finally:
-            conn.close()
-
+    user_role = get_user_role_from_session()
     force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
+
     all_movies = movie_repo.find_all()
     decorated_movies = movie_decorator.get_decorated_movies(all_movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
@@ -100,35 +75,10 @@ def get_now_showing():
     Query params:
     - force_customer_view: If 'true', shows customer view even for admins
     """
-    user_role = None
-    if 'user_id' in session:
-        conn = get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-                user = cursor.fetchone()
-                user_role = user.get('role') if user else None
-        finally:
-            conn.close()
-
+    user_role = get_user_role_from_session()
     force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Currently Running'")
-        rows = cursor.fetchall()
-    conn.close()
 
-    movies = [Movie(
-        movie_id=row['movie_id'],
-        title=row['title'],
-        genre=row['genre'],
-        rating=row['rating'],
-        description=row['description'],
-        poster_url=row['poster_url'],
-        trailer_url=row['trailer_url'],
-        status=row['status']
-    ) for row in rows]
-
+    movies = movie_repo.find_by_status('Currently Running')
     decorated_movies = movie_decorator.get_decorated_movies(movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
 
@@ -140,35 +90,10 @@ def get_coming_soon():
     Query params:
     - force_customer_view: If 'true', shows customer view even for admins
     """
-    user_role = None
-    if 'user_id' in session:
-        conn = get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-                user = cursor.fetchone()
-                user_role = user.get('role') if user else None
-        finally:
-            conn.close()
-
+    user_role = get_user_role_from_session()
     force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT movie_id, title, genre, rating, description, poster_url, trailer_url, status FROM Movie WHERE status = 'Coming Soon'")
-        rows = cursor.fetchall()
-    conn.close()
 
-    movies = [Movie(
-        movie_id=row['movie_id'],
-        title=row['title'],
-        genre=row['genre'],
-        rating=row['rating'],
-        description=row['description'],
-        poster_url=row['poster_url'],
-        trailer_url=row['trailer_url'],
-        status=row['status']
-    ) for row in rows]
-
+    movies = movie_repo.find_by_status('Coming Soon')
     decorated_movies = movie_decorator.get_decorated_movies(movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
 
@@ -178,87 +103,23 @@ def get_movies_details(movie_id):
     """Get single movie with role-specific decoration.
 
     Query params:
-    - force_customer_view: If 'true', shows customer view even for admins (useful for home page previews)
+    - force_customer_view: If 'true', shows customer view even for admins
     """
-    user_role = None
-    if 'user_id' in session:
-        conn = get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-                user = cursor.fetchone()
-                user_role = user.get('role') if user else None
-        finally:
-            conn.close()
-
+    user_role = get_user_role_from_session()
     force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
+
     decorated_movie = movie_decorator.get_decorated_movie(movie_id, user_role, force_customer_view=force_customer_view)
     if not decorated_movie:
         return jsonify({'error': 'Movie not found'}), 404
     return {"movie": decorated_movie}
 
 
-@movies_bp.route('/api/movies/<int:movie_id>', methods=['DELETE'])
-def delete_movie(movie_id):
-    """
-    Delete a movie (admin only).
-
-    Route handler: Thin request/response adapter
-    Business logic: Handled by MovieRepository
-    """
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    # Check if user is admin
-    from db import get_db
-    conn = get_db()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-        if not user or user.get('role') != 'admin':
-            return jsonify({'error': 'Only admins can delete movies'}), 403
-    finally:
-        conn.close()
-
-    try:
-        # Find existing movie
-        existing_movie = movie_repo.find_by_id(movie_id)
-        if not existing_movie:
-            return jsonify({'error': 'Movie not found'}), 404
-
-        # Delete movie via repository
-        movie_repo.delete(existing_movie)
-
-        return jsonify({
-            'status': 'success',
-            'message': 'Movie deleted successfully',
-        }), 200
-
-    except Exception as e:
-        print(f"[MOVIE] Error deleting movie: {e}")
-        return jsonify({'error': str(e)}), 500
-
-    """
-    Update an existing movie (admin only).
-
-    Route handler: Thin request/response adapter
-    Business logic: Handled by MovieRepository
-    """
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    # Check if user is admin
-    from db import get_db
-    conn = get_db()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT role FROM User WHERE user_id = %s", (session['user_id'],))
-            user = cursor.fetchone()
-        if not user or user.get('role') != 'admin':
-            return jsonify({'error': 'Only admins can update movies'}), 403
-    finally:
-        conn.close()
+@movies_bp.route('/api/movies/<int:movie_id>', methods=['PUT'])
+def update_movie(movie_id):
+    """Update an existing movie (admin only)."""
+    is_admin, error_response = require_admin()
+    if not is_admin:
+        return error_response
 
     try:
         data = request.get_json()
@@ -296,4 +157,30 @@ def delete_movie(movie_id):
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         print(f"[MOVIE] Error updating movie: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@movies_bp.route('/api/movies/<int:movie_id>', methods=['DELETE'])
+def delete_movie(movie_id):
+    """Delete a movie (admin only)."""
+    is_admin, error_response = require_admin()
+    if not is_admin:
+        return error_response
+
+    try:
+        # Find existing movie
+        existing_movie = movie_repo.find_by_id(movie_id)
+        if not existing_movie:
+            return jsonify({'error': 'Movie not found'}), 404
+
+        # Delete movie via repository
+        movie_repo.delete(existing_movie)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Movie deleted successfully',
+        }), 200
+
+    except Exception as e:
+        print(f"[MOVIE] Error deleting movie: {e}")
         return jsonify({'error': str(e)}), 500

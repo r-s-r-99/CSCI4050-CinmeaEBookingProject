@@ -105,7 +105,7 @@ class BookingService:
 
         raise ValueError("Booking session not found or expired")
 
-    def process_payment(self, token, card_data):
+    def process_payment(self, token, card_data=None, card_id=None, user_id=None):
         """
         Process placeholder payment.
 
@@ -114,28 +114,46 @@ class BookingService:
 
         Args:
             token: Temporary booking token
-            card_data: Card information (placeholder validation only)
+            card_data: Card information for new card (optional)
+            card_id: ID of saved card (optional)
+            user_id: ID of user (required if using saved card)
         """
-        # Validate card format (basic checks)
-        card_number = card_data.get("cardNumber", "").replace(" ", "")
-        if not card_number or len(card_number) < 13:
-            raise ValueError("Invalid card number")
+        if card_data:
+            # Validate new card format (basic checks)
+            card_number = card_data.get("cardNumber", "").replace(" ", "")
+            if not card_number or len(card_number) < 13:
+                raise ValueError("Invalid card number")
 
-        expiry = card_data.get("expiry", "")  # Frontend sends 'expiry', not 'expirationDate'
-        if not expiry or "/" not in expiry:
-            raise ValueError("Invalid expiration date format (MM/YY required)")
+            expiry = card_data.get("expiry", "")  # Frontend sends 'expiry', not 'expirationDate'
+            if not expiry or "/" not in expiry:
+                raise ValueError("Invalid expiration date format (MM/YY required)")
 
-        cvc = card_data.get("cvc", "")
-        if not cvc or len(cvc) < 3:
-            raise ValueError("Invalid CVC")
+            cvc = card_data.get("cvc", "")
+            if not cvc or len(cvc) < 3:
+                raise ValueError("Invalid CVC")
 
-        name_on_card = card_data.get("nameOnCard", "")
-        if not name_on_card or not name_on_card.strip():
-            raise ValueError("Name on card is required")
+            name_on_card = card_data.get("nameOnCard", "")
+            if not name_on_card or not name_on_card.strip():
+                raise ValueError("Name on card is required")
 
-        # Placeholder: In real system, call payment gateway
-        print(f"[PAYMENT] Processing payment for token: {token}")
-        print(f"[PAYMENT] Card: {card_number[-4:].rjust(16, '*')}")
+            # Placeholder: In real system, call payment gateway
+            print(f"[PAYMENT] Processing payment for token: {token}")
+            print(f"[PAYMENT] Card: {card_number[-4:].rjust(16, '*')}")
+
+        elif card_id:
+            # Validate saved card exists and belongs to user
+            if not user_id:
+                raise ValueError("User ID required for saved card payment")
+
+            saved_card = self.payment_card_repo.find_by_id(card_id)
+            if not saved_card or saved_card.user_id != user_id:
+                raise ValueError("Saved card not found or does not belong to user")
+
+            # Placeholder: In real system, call payment gateway with saved card
+            print(f"[PAYMENT] Processing payment for token: {token}")
+            print(f"[PAYMENT] Using saved card: {card_id}")
+        else:
+            raise ValueError("Either card_data or card_id must be provided")
 
         return True
 
