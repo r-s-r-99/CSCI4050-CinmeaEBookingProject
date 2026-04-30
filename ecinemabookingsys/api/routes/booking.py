@@ -101,6 +101,11 @@ def process_payment():
         if not temp_booking:
             return jsonify({'error': 'Booking session not found'}), 400
 
+        # Store card_id in session if using a saved card
+        if card_id:
+            temp_booking['card_id'] = card_id
+            session.modified = True
+
         # Fetch movie and showtime details to include in email
         try:
             from db import get_db
