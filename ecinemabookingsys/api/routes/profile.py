@@ -4,6 +4,7 @@ from models.customer import Customer
 from models.payment_card import PaymentCard
 from models.favorite import Favorite
 from models.mailing_address import MailingAddress
+from repositories.payment_card_repository import PaymentCardRepository
 from email_utils import send_profile_update_email
 
 profile_bp = Blueprint('profile', __name__)
@@ -92,7 +93,8 @@ def get_profile_payment():
         return jsonify({'error': 'Unauthorized'}), 401
 
     try:
-        cards = PaymentCard.get_by_user(user_id)
+        payment_card_repo = PaymentCardRepository()
+        cards = payment_card_repo.find_by_user(user_id)
         return jsonify([card.to_dict() for card in cards]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -116,10 +118,21 @@ def update_profile_payment():
         expiration_date = f"20{year.strip()}-{month.strip()}-01"
 
     try:
+        payment_card_repo = PaymentCardRepository()
+
         if card_id is None:
-            if PaymentCard.count_by_user(user_id) >= 3:
+            if payment_card_repo.count_by_user(user_id) >= 3:
                 return jsonify({'error': 'Maximum of 3 cards allowed.'}), 400
-            PaymentCard.create(user_id, card_name, card_number, cvv, expiration_date)
+
+            card = PaymentCard(
+                card_id=None,
+                user_id=user_id,
+                card_name=card_name,
+                card_number=card_number,
+                cvv=cvv,
+                expiration_date=expiration_date
+            )
+            payment_card_repo.save(card)
         else:
             card = PaymentCard(
                 card_id=card_id,
@@ -129,7 +142,7 @@ def update_profile_payment():
                 cvv=cvv,
                 expiration_date=expiration_date
             )
-            card.update(card_name, card_number, cvv, expiration_date)
+            payment_card_repo.save(card)
 
         user = User.find_by_id(user_id)
         send_profile_update_email(user.email, user.first_name, 'payment cards')
@@ -150,6 +163,7 @@ def delete_payment_card():
         return jsonify({'error': 'cardId required'}), 400
 
     try:
+        payment_card_repo = PaymentCardRepository()
         card = PaymentCard(
             card_id=card_id,
             user_id=user_id,
@@ -158,7 +172,7 @@ def delete_payment_card():
             cvv=None,
             expiration_date=None
         )
-        card.delete()
+        payment_card_repo.delete(card)
         return jsonify({'message': 'Card deleted'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
