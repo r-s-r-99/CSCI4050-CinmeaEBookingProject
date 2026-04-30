@@ -3,7 +3,6 @@ USE cinemaebooking;
 
 CREATE TABLE IF NOT EXISTS User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
@@ -28,12 +27,10 @@ CREATE TABLE IF NOT EXISTS MailingAddress (
 CREATE TABLE IF NOT EXISTS PaymentCard (
     card_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    card_name varchar(255) NOT NULL,
     card_number VARCHAR(255) NOT NULL,
+    cvv VARCHAR(255) NOT NULL, 
     expiration_date DATE NOT NULL,
-    billing_house VARCHAR(20),
-    billing_street VARCHAR(255),
-    billing_apt VARCHAR(50),
-    billing_zip VARCHAR(10),
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
 
@@ -41,6 +38,7 @@ CREATE TABLE IF NOT EXISTS PasswordResetToken (
     token_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     token VARCHAR(255) UNIQUE NOT NULL,
+    type VARCHAR(255),
     expires_at TIMESTAMP NOT NULL,
     used BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
@@ -142,35 +140,4 @@ CREATE TABLE IF NOT EXISTS Recommendation (
     score DOUBLE,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
     FOREIGN KEY (movie_id) REFERENCES Movie(movie_id) ON DELETE CASCADE
-);
-
-INSERT INTO Showroom (room_number, number_of_seats) VALUES
-(1, 96),
-(2, 96),
-(3, 96),
-(4, 96);
-
-INSERT INTO Seat (seat_number, room_id) VALUES
-('A1',1),('A2',1),('A3',1),('A4',1),('A5',1),('A6',1),('A7',1),('A8',1),('A9',1),('A10',1),('A11',1),('A12',1),
-('B1',1),('B2',1),('B3',1),('B4',1),('B5',1),('B6',1),('B7',1),('B8',1),('B9',1),('B10',1),('B11',1),('B12',1),
-('C1',1),('C2',1),('C3',1),('C4',1),('C5',1),('C6',1),('C7',1),('C8',1),('C9',1),('C10',1),('C11',1),('C12',1),
-('D1',1),('D2',1),('D3',1),('D4',1),('D5',1),('D6',1),('D7',1),('D8',1),('D9',1),('D10',1),('D11',1),('D12',1),
-('E1',1),('E2',1),('E3',1),('E4',1),('E5',1),('E6',1),('E7',1),('E8',1),('E9',1),('E10',1),('E11',1),('E12',1),
-('F1',1),('F2',1),('F3',1),('F4',1),('F5',1),('F6',1),('F7',1),('F8',1),('F9',1),('F10',1),('F11',1),('F12',1),
-('G1',1),('G2',1),('G3',1),('G4',1),('G5',1),('G6',1),('G7',1),('G8',1),('G9',1),('G10',1),('G11',1),('G12',1),
-('H1',1),('H2',1),('H3',1),('H4',1),('H5',1),('H6',1),('H7',1),('H8',1),('H9',1),('H10',1),('H11',1),('H12',1);
-
-INSERT INTO Promotion (code, discount_percentage, start_date, end_date, tickets_available) VALUES
-('WELCOME10', 10.0, '2026-04-01', '2026-04-30', 100),
-('SUMMER20', 20.0, '2026-06-01', '2026-08-31', 500);
-
-INSERT INTO User (username, email, password, first_name, last_name, role, account_status)
-VALUES (
-    'admin',
-    'admin@cinemabooking.com',
-    '$2b$12$KIXn7rHQL5L0Eup3vMnVeeSBCMQb4Y7JxHFCGvHzSl6VTT0FBJlwu',
-    'Admin',
-    'User',
-    'admin',
-    'Active'
 );
