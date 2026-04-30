@@ -3,6 +3,7 @@ from services.booking_service import BookingService
 from services.email_service import EmailService
 import secrets
 from datetime import datetime, timedelta
+import pymysql
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -100,7 +101,48 @@ def process_payment():
         if not temp_booking:
             return jsonify({'error': 'Booking session not found'}), 400
 
+        # Fetch movie and showtime details to include in email
+        try:
+            from db import get_db
+            conn = get_db()
+            with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+                # Fetch showtime and movie details
+                cursor.execute("""
+                    SELECT s.show_date, s.show_time, m.title, sr.room_number
+                    FROM Showtime s
+                    LEFT JOIN Movie m ON s.movie_id = m.movie_id
+                    LEFT JOIN Showroom sr ON s.room_id = sr.room_id
+                    WHERE s.showtime_id = %s
+                """, (temp_booking.get('showtime_id'),))
+                result = cursor.fetchone()
+            conn.close()
+
+            if result:
+                show_date = result['show_date']
+                show_time = result['show_time']
+                movie_title = result['title'] or 'Movie'
+                room_number = result['room_number'] or 'N/A'
+
+                # Format date
+                from datetime import datetime
+                formatted_date = datetime.strptime(str(show_date), '%Y-%m-%d').strftime('%m/%d/%Y')
+
+                # Add movie details to temp_booking for email
+                temp_booking['movie_details'] = {
+                    'title': movie_title,
+                    'showtime': f"{formatted_date} at {show_time} (Room {room_number})"
+                }
+                print(f"[BOOKING] Added movie_details: {temp_booking['movie_details']}")
+            else:
+                print(f"[BOOKING] No showtime found for showtime_id: {temp_booking.get('showtime_id')}")
+        except Exception as e:
+            print(f"[BOOKING] Error fetching movie details for email: {e}")
+            import traceback
+            traceback.print_exc()
+            # Continue anyway with fallback values
+
         # Send verification email
+        print(f"[BOOKING] Sending email with booking_data: {temp_booking}")
         email_service.send_booking_confirmation(
             to_email=temp_booking.get('email'),
             token=token,

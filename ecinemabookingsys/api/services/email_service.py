@@ -37,10 +37,15 @@ class EmailService:
         """
         verify_url = f"{self.BASE_URL}/api/bookings/verify/{token}"
 
+        print(f"[EMAIL] Received booking_data: {booking_data}")
+        print(f"[EMAIL] movie_details in booking_data: {booking_data.get('movie_details')}")
+
         movie_title = booking_data.get("movie_details", {}).get("title", "Movie")
         showtime = booking_data.get("movie_details", {}).get("showtime", "N/A")
         total_price = booking_data.get("total_price", 0)
         seat_count = len(booking_data.get("seats", []))
+
+        print(f"[EMAIL] Using movie_title: {movie_title}, showtime: {showtime}")
 
         html = f"""
         <html>
