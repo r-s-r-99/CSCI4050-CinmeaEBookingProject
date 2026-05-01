@@ -26,6 +26,7 @@ import ManageMovies from './pages/ManageMovies';
 import ManageShowtimes from './pages/ManageShowtimes';
 import AddMovies from './pages/AddMovies';
 import AdminMovieDetail from './pages/AdminMovieDetail';
+import EditMovie from './pages/EditMovie';
 
 
 export const router = createBrowserRouter([
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
           { index: true,                      Component: AdminHome },
           { path: 'manage-movies',            Component: ManageMovies },
           { path: 'manage-movies/admin-movie/:id',          Component: AdminMovieDetail },
+          { path: 'manage-movies/edit-movie/:id',          Component: EditMovie },
           { path: 'manage-movies/add-movies',  Component: AddMovies },
           { path: 'manage-movies/manage-showtimes',  Component: ManageShowtimes },
         ],
@@ -77,6 +79,11 @@ export const router = createBrowserRouter([
         path: 'manage-showtimes',
         Component: AdminRoute,
         children: [{ index: true, Component: ManageShowtimes }],
+      },
+      {
+        path: 'edit-movies/:id',
+        Component: AdminRoute,
+        children: [{ index: true, Component: EditMovie }],
       },
       {
         path: 'settings',

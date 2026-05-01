@@ -5,7 +5,7 @@ import { ReceiptText, UserPen, Clapperboard, CalendarClock, } from 'lucide-react
 
 export default function AdminHome() {
     const navigate = useNavigate();
-/*
+
     //This makes sure that only the admin can access this page.
     useEffect(() => {
         fetch('/api/me', { credentials: 'include' })
@@ -20,7 +20,6 @@ export default function AdminHome() {
                 navigate('/');
             });
     }, []);
-    */
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -33,18 +32,18 @@ export default function AdminHome() {
             </div>
 
             <div className="container mx-auto px-4 py-12">
-                {/*Admin Menu Seciton*/}
-                <div className="flec items-center justify-between">
-                    <h2 className="text-3xl font-semibold border-b-20 border-transparent">Admin Menu</h2>
+                {/*Admin Menu Section*/}
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-semibold mb-8">Admin Menu</h2>
 
                     {/*Menu Option Grid*/}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
-                        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
-                            <button onClick={(e) => navigate("/admin/manage-movies")}>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2"><Clapperboard />Manage Movies</h3>
-                                <p className="text-gray-500 text-sm">Access and update movie availability</p>
-                            </button>
+                        <div
+                            onClick={() => navigate('/manage-movies')}
+                            className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                        >
+                            <h3 className="text-xl font-bold text-gray-900 mb-2"><Clapperboard />Manage Movies</h3>
+                            <p className="text-gray-500 text-sm">Access and update movie availability</p>
                         </div>
 
                         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
