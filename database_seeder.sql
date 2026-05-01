@@ -13,7 +13,6 @@ INSERT INTO Seat (seat_number, room_id) VALUES
 ('F1',1),('F2',1),('F3',1),('F4',1),('F5',1),('F6',1),('F7',1),('F8',1),('F9',1),('F10',1),('F11',1),('F12',1),
 ('G1',1),('G2',1),('G3',1),('G4',1),('G5',1),('G6',1),('G7',1),('G8',1),('G9',1),('G10',1),('G11',1),('G12',1),
 ('H1',1),('H2',1),('H3',1),('H4',1),('H5',1),('H6',1),('H7',1),('H8',1),('H9',1),('H10',1),('H11',1),('H12',1),
--- Room 2
 ('A1',2),('A2',2),('A3',2),('A4',2),('A5',2),('A6',2),('A7',2),('A8',2),('A9',2),('A10',2),('A11',2),('A12',2),
 ('B1',2),('B2',2),('B3',2),('B4',2),('B5',2),('B6',2),('B7',2),('B8',2),('B9',2),('B10',2),('B11',2),('B12',2),
 ('C1',2),('C2',2),('C3',2),('C4',2),('C5',2),('C6',2),('C7',2),('C8',2),('C9',2),('C10',2),('C11',2),('C12',2),
@@ -47,12 +46,12 @@ INSERT INTO Promotion (code, discount_percentage, start_date, end_date, tickets_
 
 INSERT INTO User (email, password, first_name, last_name, role, account_status)
 VALUES (
-    'admin@cinemabooking.com',
-    '$2b$12$KIXn7rHQL5L0Eup3vMnVeeSBCMQb4Y7JxHFCGvHzSl6VTT0FBJlwu',
-    'Admin',
-    'User',
-    'admin',
-    'Active'
+    'admin@cinemabooking.com',
+    '$2b$12$KIXn7rHQL5L0Eup3vMnVeeSBCMQb4Y7JxHFCGvHzSl6VTT0FBJlwu',
+    'Admin',
+    'User',
+    'admin',
+    'Active'
 );
 
 INSERT INTO Movie (title, genre, rating, description, poster_url, trailer_url, status)
@@ -63,17 +62,36 @@ VALUES
 ('The Shawshank Redemption', 'Drama', 'R', 'prison life', 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', 'https://www.youtube.com/embed/6hB3S9bIaco', 'Currently Running'),
 ('Spirited Away', 'Animation', 'PG', 'anime movie', 'https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg', 'https://www.youtube.com/embed/ByXuk9QqQmc', 'Currently Running'),
 ('Jurassic Park', 'Sci-Fi', 'PG-13', 'dinosaur rawr', 'https://image.tmdb.org/t/p/w500/9i3plLl89DHMz7mahksDaAo7HIS.jpg', 'https://www.youtube.com/embed/lc0UehYemQA', 'Currently Running'),
+('Inception', 'Sci-Fi', 'PG-13', 'a thief enters the dreams of others', 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg', 'https://www.youtube.com/embed/YoHD9XEInc0', 'Currently Running'),
+('Interstellar', 'Sci-Fi', 'PG-13', 'astronauts travel through a wormhole', 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', 'https://www.youtube.com/embed/zSWdZVtXT7E', 'Currently Running'),
+('The Lion King', 'Animation', 'G', 'a lion cub grows up to reclaim his throne', 'https://image.tmdb.org/t/p/w500/sKCr78MXSLixwmZ8DyJLrpMsd15.jpg', 'https://www.youtube.com/embed/4sj1MT05lAA', 'Currently Running'),
+('Goodfellas', 'Crime', 'R', 'rise and fall of a mob associate', 'https://image.tmdb.org/t/p/w500/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg', 'https://www.youtube.com/embed/qo5jJpHtI1Y', 'Currently Running'),
+('The Silence of the Lambs', 'Thriller', 'R', 'an FBI trainee hunts a serial killer', 'https://image.tmdb.org/t/p/w500/uS9m8OBk1A8eM9I042bx8XXpqAq.jpg', 'https://www.youtube.com/embed/W6Mm8Sbe__o', 'Currently Running'),
+('Forrest Gump', 'Drama', 'PG-13', 'a kind-hearted man witnesses history unfold', 'https://image.tmdb.org/t/p/w500/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg', 'https://www.youtube.com/embed/bLvqoHBptjg', 'Currently Running'),
+('Parasite', 'Thriller', 'R', 'two families from different classes collide', 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg', 'https://www.youtube.com/embed/5xH0HfJHsaY', 'Currently Running'),
+('The Matrix', 'Sci-Fi', 'R', 'a hacker discovers reality is a simulation', 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', 'https://www.youtube.com/embed/vKQi3bBA1y8', 'Currently Running'),
+('Schindlers List', 'Drama', 'R', 'a businessman saves Jews during the Holocaust', 'https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg', 'https://www.youtube.com/embed/gG22XNhtnoY', 'Currently Running'),
 --
 ('2001: A Space Odyssey', 'Sci-Fi', 'G', 'flying through space', 'https://image.tmdb.org/t/p/w500/ve72VxNqjGM69Uky4WToA3q0uRf.jpg', 'https://www.youtube.com/embed/oR_e9y-bka0', 'Coming Soon'),
 ('Casablanca', 'Romance', 'PG', 'love', 'https://image.tmdb.org/t/p/w500/5K7cOHoay2mZusSLezBOY0Qxh8a.jpg', 'https://www.youtube.com/embed/BkL9l7qovsE', 'Coming Soon'),
 ('The Shining', 'Horror', 'R', 'scary', 'https://image.tmdb.org/t/p/w500/9fgh3Ns1iRzlQNYuJyK0ARQZU7w.jpg', 'https://www.youtube.com/embed/5Cb3ik6zP2I', 'Coming Soon'),
 ('Singin in the Rain', 'Musical', 'G', 'singing', 'https://image.tmdb.org/t/p/w500/w03EiJVHP8Un77boQeE7hg9DVdU.jpg', 'https://www.youtube.com/embed/5_EVHeNEIJY', 'Coming Soon'),
-('Seven Samurai', 'Action', 'NR', 'samurai movie', 'https://image.tmdb.org/t/p/w500/8OKmBV5BUFzmozIC3pPWKHy17kx.jpg', 'https://www.youtube.com/embed/7mw6LyyoeGE', 'Coming Soon');
+('Seven Samurai', 'Action', 'NR', 'samurai movie', 'https://image.tmdb.org/t/p/w500/8OKmBV5BUFzmozIC3pPWKHy17kx.jpg', 'https://www.youtube.com/embed/7mw6LyyoeGE', 'Coming Soon'),
+('Apocalypse Now', 'War', 'R', 'a soldier journeys into the heart of darkness', 'https://image.tmdb.org/t/p/w500/gQB8Y5RCMkv2zwzFHbUJX3kAhvA.jpg', 'https://www.youtube.com/embed/FqCODMYFtMg', 'Coming Soon'),
+('Blade Runner 2049', 'Sci-Fi', 'R', 'a blade runner uncovers a buried secret', 'https://image.tmdb.org/t/p/w500/gajva4NQMcsR8mFhVQAHCBOGEWY.jpg', 'https://www.youtube.com/embed/gCcx85zbxz4', 'Coming Soon'),
+('La La Land', 'Musical', 'PG-13', 'a musician and an actress fall in love in LA', 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg', 'https://www.youtube.com/embed/0pdqf4P9MB8', 'Coming Soon'),
+('No Country for Old Men', 'Thriller', 'R', 'a hunter stumbles upon a drug deal gone wrong', 'https://image.tmdb.org/t/p/w500/6467ik5PbzOtB4VFkZKAa1J0yhZ.jpg', 'https://www.youtube.com/embed/38A__WT3-o0', 'Coming Soon'),
+('WALL-E', 'Animation', 'G', 'a lonely robot falls in love while saving Earth', 'https://image.tmdb.org/t/p/w500/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg', 'https://www.youtube.com/embed/alIq_wG9FNk', 'Coming Soon'),
+('Amadeus', 'Drama', 'PG', 'the rivalry between Mozart and Salieri', 'https://image.tmdb.org/t/p/w500/tnPqbOGS6V7rUDMtNEMGPB9p6sJ.jpg', 'https://www.youtube.com/embed/SfsuxuSEHbA', 'Coming Soon'),
+('Alien', 'Horror', 'R', 'a crew encounters a deadly extraterrestrial', 'https://image.tmdb.org/t/p/w500/vfrQk5IPloGg1v9Rzbh2Eg3VGyM.jpg', 'https://www.youtube.com/embed/LjLamj-b0I8', 'Coming Soon'),
+('City of God', 'Crime', 'R', 'two boys grow up in a violent Rio de Janeiro favela', 'https://image.tmdb.org/t/p/w500/k7eYdWvhYQyRQoU2TB2A2Xu2grZ.jpg', 'https://www.youtube.com/embed/dcUOao4apOU', 'Coming Soon'),
+('Princess Mononoke', 'Animation', 'PG-13', 'a prince mediates war between gods and humans', 'https://image.tmdb.org/t/p/w500/4SFqHDZ1NvWdysucWbgnQjpMGPJ.jpg', 'https://www.youtube.com/embed/4OiMa85hF5A', 'Coming Soon'),
+('Whiplash', 'Drama', 'R', 'a young drummer pursues greatness under a ruthless instructor', 'https://image.tmdb.org/t/p/w500/7fn624j5lj3xTme2SgiLCeuedmO.jpg', 'https://www.youtube.com/embed/7d_jQycdQGo', 'Coming Soon');
 
-INSERT INTO Showtime (movie_id, show_date, show_time, room_id)
-VALUES
-(1, '2026-03-05', '14:00:00', 1), (1, '2026-03-05', '17:00:00', 1), (1, '2026-03-05', '20:00:00', 1),
-(2, '2026-03-05', '14:00:00', 2), (2, '2026-03-05', '20:00:00', 2),
-(3, '2026-03-05', '13:00:00', 3), (3, '2026-03-05', '19:00:00', 3),
-(4, '2026-03-05', '11:00:00', 4), (4, '2026-03-05', '15:00:00', 4),
-(5, '2026-03-05', '12:00:00', 1), (5, '2026-03-05', '18:00:00', 2);
+INSERT INTO Showtime (movie_id, show_date, show_time)
+VALUES 
+(1, '2026-03-05', '14:00:00'), (1, '2026-03-05', '17:00:00'), (1, '2026-03-05', '20:00:00'),
+(2, '2026-03-05', '14:00:00'), (2, '2026-03-05', '20:00:00'),
+(3, '2026-03-05', '13:00:00'), (3, '2026-03-05', '19:00:00'),
+(4, '2026-03-05', '11:00:00'), (4, '2026-03-05', '15:00:00'),
+(5, '2026-03-05', '12:00:00'), (5, '2026-03-05', '18:00:00');
