@@ -72,26 +72,75 @@ VALUES
 ('The Matrix', 'Sci-Fi', 'R', 'a hacker discovers reality is a simulation', 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', 'https://www.youtube.com/embed/vKQi3bBA1y8', 'Currently Running'),
 ('Schindlers List', 'Drama', 'R', 'a businessman saves Jews during the Holocaust', 'https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg', 'https://www.youtube.com/embed/gG22XNhtnoY', 'Currently Running'),
 --
-('2001: A Space Odyssey', 'Sci-Fi', 'G', 'flying through space', 'https://image.tmdb.org/t/p/w500/ve72VxNqjGM69Uky4WToA3q0uRf.jpg', 'https://www.youtube.com/embed/oR_e9y-bka0', 'Coming Soon'),
-('Casablanca', 'Romance', 'PG', 'love', 'https://image.tmdb.org/t/p/w500/5K7cOHoay2mZusSLezBOY0Qxh8a.jpg', 'https://www.youtube.com/embed/BkL9l7qovsE', 'Coming Soon'),
-('The Shining', 'Horror', 'R', 'scary', 'https://image.tmdb.org/t/p/w500/9fgh3Ns1iRzlQNYuJyK0ARQZU7w.jpg', 'https://www.youtube.com/embed/5Cb3ik6zP2I', 'Coming Soon'),
-('Singin in the Rain', 'Musical', 'G', 'singing', 'https://image.tmdb.org/t/p/w500/w03EiJVHP8Un77boQeE7hg9DVdU.jpg', 'https://www.youtube.com/embed/5_EVHeNEIJY', 'Coming Soon'),
-('Seven Samurai', 'Action', 'NR', 'samurai movie', 'https://image.tmdb.org/t/p/w500/8OKmBV5BUFzmozIC3pPWKHy17kx.jpg', 'https://www.youtube.com/embed/7mw6LyyoeGE', 'Coming Soon'),
-('Apocalypse Now', 'War', 'R', 'a soldier journeys into the heart of darkness', 'https://image.tmdb.org/t/p/w500/gQB8Y5RCMkv2zwzFHbUJX3kAhvA.jpg', 'https://www.youtube.com/embed/FqCODMYFtMg', 'Coming Soon'),
-('Blade Runner 2049', 'Sci-Fi', 'R', 'a blade runner uncovers a buried secret', 'https://image.tmdb.org/t/p/w500/gajva4NQMcsR8mFhVQAHCBOGEWY.jpg', 'https://www.youtube.com/embed/gCcx85zbxz4', 'Coming Soon'),
-('La La Land', 'Musical', 'PG-13', 'a musician and an actress fall in love in LA', 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg', 'https://www.youtube.com/embed/0pdqf4P9MB8', 'Coming Soon'),
-('No Country for Old Men', 'Thriller', 'R', 'a hunter stumbles upon a drug deal gone wrong', 'https://image.tmdb.org/t/p/w500/6467ik5PbzOtB4VFkZKAa1J0yhZ.jpg', 'https://www.youtube.com/embed/38A__WT3-o0', 'Coming Soon'),
-('WALL-E', 'Animation', 'G', 'a lonely robot falls in love while saving Earth', 'https://image.tmdb.org/t/p/w500/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg', 'https://www.youtube.com/embed/alIq_wG9FNk', 'Coming Soon'),
-('Amadeus', 'Drama', 'PG', 'the rivalry between Mozart and Salieri', 'https://image.tmdb.org/t/p/w500/tnPqbOGS6V7rUDMtNEMGPB9p6sJ.jpg', 'https://www.youtube.com/embed/SfsuxuSEHbA', 'Coming Soon'),
-('Alien', 'Horror', 'R', 'a crew encounters a deadly extraterrestrial', 'https://image.tmdb.org/t/p/w500/vfrQk5IPloGg1v9Rzbh2Eg3VGyM.jpg', 'https://www.youtube.com/embed/LjLamj-b0I8', 'Coming Soon'),
-('City of God', 'Crime', 'R', 'two boys grow up in a violent Rio de Janeiro favela', 'https://image.tmdb.org/t/p/w500/k7eYdWvhYQyRQoU2TB2A2Xu2grZ.jpg', 'https://www.youtube.com/embed/dcUOao4apOU', 'Coming Soon'),
-('Princess Mononoke', 'Animation', 'PG-13', 'a prince mediates war between gods and humans', 'https://image.tmdb.org/t/p/w500/4SFqHDZ1NvWdysucWbgnQjpMGPJ.jpg', 'https://www.youtube.com/embed/4OiMa85hF5A', 'Coming Soon'),
-('Whiplash', 'Drama', 'R', 'a young drummer pursues greatness under a ruthless instructor', 'https://image.tmdb.org/t/p/w500/7fn624j5lj3xTme2SgiLCeuedmO.jpg', 'https://www.youtube.com/embed/7d_jQycdQGo', 'Coming Soon');
+('Saving Private Ryan', 'War', 'R', 'a group of soldiers go behind enemy lines to find a paratrooper', 'https://image.tmdb.org/t/p/w500/uqx37cS8cpHg8U35f9U5IBlrCV3.jpg', 'https://www.youtube.com/embed/9CiW_DgxCnQ', 'Coming Soon'),
+('Taxi Driver', 'Crime', 'R', 'a mentally unstable veteran works as a night taxi driver in New York', 'https://image.tmdb.org/t/p/w500/ekstpH614fwDX8DUln1a2Opz0N8.jpg', 'https://www.youtube.com/embed/UUxoENqAMGk', 'Coming Soon'),
+('Gladiator', 'Action', 'R', 'a Roman general seeks revenge after being betrayed and enslaved', 'https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg', 'https://www.youtube.com/embed/owK1qxDselE', 'Coming Soon'),
+('Memento', 'Thriller', 'R', 'a man with short-term memory loss hunts his wifes killer', 'https://image.tmdb.org/t/p/w500/yuNs09hvpHVU1cBTCAk9zxsL2oW.jpg', 'https://www.youtube.com/embed/0vS0E9bBSL0', 'Coming Soon'),
+('The Pianist', 'Drama', 'R', 'a Jewish pianist survives the destruction of the Warsaw ghetto', 'https://image.tmdb.org/t/p/w500/2hFvxCCWrTmCYwfy7yum0GKRi3Y.jpg', 'https://www.youtube.com/embed/BFwGqLa_oAo', 'Coming Soon'),
+('The Grand Budapest Hotel', 'Comedy', 'R', 'a legendary concierge and his lobby boy go on a wild adventure', 'https://image.tmdb.org/t/p/w500/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg', 'https://www.youtube.com/embed/1Fg5iWmQjwk', 'Coming Soon'),
+('Mad Max: Fury Road', 'Action', 'R', 'a woman rebels against a tyrant in a post-apocalyptic wasteland', 'https://image.tmdb.org/t/p/w500/8tZYtuWezp8JbcsvHYO0O46tFbo.jpg', 'https://www.youtube.com/embed/hEJnMQG9ev8', 'Coming Soon'),
+('The Truman Show', 'Drama', 'PG', 'a man discovers his entire life is a reality TV show', 'https://image.tmdb.org/t/p/w500/vuza0WqY239yBXOadKlGwJsZJFE.jpg', 'https://www.youtube.com/embed/dlnmQbPGuls', 'Coming Soon'),
+('Eternal Sunshine of the Spotless Mind', 'Romance', 'R', 'a couple erases each other from their memories after a breakup', 'https://image.tmdb.org/t/p/w500/5MwkWH9tYHv3mV9OdYTMR5qreIz.jpg', 'https://www.youtube.com/embed/07-QBnEkgXU', 'Coming Soon'),
+('Oldboy', 'Thriller', 'R', 'a man imprisoned for 15 years seeks revenge after his release', 'https://image.tmdb.org/t/p/w500/pWDtjs568ZfOTMbURQBYuT4Qxka.jpg', 'https://www.youtube.com/embed/2GBrFHysEvo', 'Coming Soon');
 
 INSERT INTO Showtime (movie_id, show_date, show_time)
-VALUES 
-(1, '2026-03-05', '14:00:00'), (1, '2026-03-05', '17:00:00'), (1, '2026-03-05', '20:00:00'),
-(2, '2026-03-05', '14:00:00'), (2, '2026-03-05', '20:00:00'),
-(3, '2026-03-05', '13:00:00'), (3, '2026-03-05', '19:00:00'),
-(4, '2026-03-05', '11:00:00'), (4, '2026-03-05', '15:00:00'),
-(5, '2026-03-05', '12:00:00'), (5, '2026-03-05', '18:00:00');
+VALUES
+-- 2026-03-06
+(1, '2026-03-06', '10:00:00'),
+(2, '2026-03-06', '11:00:00'),
+(3, '2026-03-06', '13:00:00'),
+(4, '2026-03-06', '15:00:00'),
+(5, '2026-03-06', '17:00:00'),
+(6, '2026-03-06', '18:00:00'),
+(7, '2026-03-06', '19:00:00'),
+(8, '2026-03-06', '20:00:00'),
+(9, '2026-03-06', '21:00:00'),
+(10,'2026-03-06', '21:30:00'),
+
+-- 2026-03-07
+(1, '2026-03-07', '09:00:00'),
+(2, '2026-03-07', '11:00:00'),
+(3, '2026-03-07', '13:30:00'),
+(4, '2026-03-07', '15:00:00'),
+(5, '2026-03-07', '16:00:00'),
+(6, '2026-03-07', '17:30:00'),
+(7, '2026-03-07', '19:00:00'),
+(8, '2026-03-07', '20:00:00'),
+(9, '2026-03-07', '21:00:00'),
+(10,'2026-03-07', '21:30:00'),
+
+-- 2026-03-08
+(1, '2026-03-08', '10:30:00'),
+(2, '2026-03-08', '12:00:00'),
+(3, '2026-03-08', '14:00:00'),
+(4, '2026-03-08', '15:30:00'),
+(5, '2026-03-08', '17:00:00'),
+(6, '2026-03-08', '18:30:00'),
+(7, '2026-03-08', '19:00:00'),
+(8, '2026-03-08', '20:30:00'),
+(9, '2026-03-08', '21:00:00'),
+(10,'2026-03-08', '21:30:00'),
+
+-- 2026-03-09
+(1, '2026-03-09', '11:00:00'),
+(2, '2026-03-09', '13:00:00'),
+(3, '2026-03-09', '14:30:00'),
+(4, '2026-03-09', '16:00:00'),
+(5, '2026-03-09', '17:30:00'),
+(6, '2026-03-09', '18:00:00'),
+(7, '2026-03-09', '19:30:00'),
+(8, '2026-03-09', '20:00:00'),
+(9, '2026-03-09', '21:00:00'),
+(10,'2026-03-09', '21:30:00'),
+
+-- 2026-03-10
+(1, '2026-03-10', '10:00:00'),
+(2, '2026-03-10', '12:30:00'),
+(3, '2026-03-10', '14:00:00'),
+(4, '2026-03-10', '15:30:00'),
+(5, '2026-03-10', '17:00:00'),
+(6, '2026-03-10', '18:30:00'),
+(7, '2026-03-10', '19:00:00'),
+(8, '2026-03-10', '20:30:00'),
+(9, '2026-03-10', '21:00:00'),
+(10,'2026-03-10', '21:30:00');

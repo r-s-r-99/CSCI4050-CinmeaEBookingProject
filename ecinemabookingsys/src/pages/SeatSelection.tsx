@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { Movie, Showtime, Seat } from '../types';
-import { ArrowLeft, Monitor } from 'lucide-react';
+import { ArrowLeft, Monitor, Clock } from 'lucide-react';
 
 type TicketCategory = 'adult' | 'senior' | 'child';
 
@@ -11,8 +11,15 @@ const TICKET_PRICES: Record<TicketCategory, number> = {
   child: 6,
 };
 
+const SEAT_LOCK_DURATION = 5; // minutes
+
 interface SeatWithCategory extends Seat {
   category: TicketCategory;
+}
+
+interface LockedSeat {
+  seat_id: string;
+  expires_at: string;
 }
 
 export default function SeatSelection() {
@@ -29,6 +36,80 @@ export default function SeatSelection() {
   // Ticket selection state
   const [requiredTickets, setRequiredTickets] = useState<TicketCategory[]>([]);
   const [validationError, setValidationError] = useState<string>('');
+
+  // Seat locking state
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [lockExpiresAt, setLockExpiresAt] = useState<Date | null>(null);
+  const [lockedSeats, setLockedSeats] = useState<LockedSeat[]>([]);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      // Release seats on unmount if we have a session
+      if (sessionToken) {
+        fetch('/api/seats/release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_token: sessionToken }),
+        }).catch(() => {});
+      }
+    };
+  }, [sessionToken]);
+
+  // Timer to update time remaining
+  useEffect(() => {
+    if (lockExpiresAt) {
+      const updateTimer = () => {
+        const remaining = Math.max(0, Math.floor((lockExpiresAt.getTime() - Date.now()) / 1000));
+        setTimeRemaining(remaining);
+        
+        if (remaining <= 0) {
+          // Lock expired - release seats
+          if (sessionToken) {
+            fetch('/api/seats/release', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session_token: sessionToken }),
+            }).catch(() => {});
+            setSessionToken(null);
+            setLockExpiresAt(null);
+            setSeats(prev => prev.map(seat => 
+              seat.status === 'selected' ? { ...seat, status: 'available' } : seat
+            ));
+            setSeatCategories({});
+          }
+        }
+      };
+
+      updateTimer();
+      timerRef.current = setInterval(updateTimer, 1000);
+
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+      };
+    }
+  }, [lockExpiresAt, sessionToken]);
+
+  // Fetch locked seats from server
+  useEffect(() => {
+    if (showtimeId) {
+      fetch(`/api/seats/locked/${showtimeId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.locked_seats) {
+            setLockedSeats(data.locked_seats);
+          }
+        })
+        .catch(err => console.error('Error fetching locked seats:', err));
+    }
+  }, [showtimeId]);
 
   useEffect(() => {
     // Extract ticket selection data if provided
@@ -91,71 +172,136 @@ export default function SeatSelection() {
     setSeats(newSeats);
   }, []);
 
-  const toggleSeat = (seatId: string) => {
-    setSeats(prev => prev.map(seat => {
-      if (seat.id === seatId && seat.status !== 'booked') {
-        if (seat.status === 'selected') {
-          setSeatCategories(prev => {
-            const updated = { ...prev };
-            delete updated[seatId];
-            return updated;
-          });
-          setValidationError('');
-          return { ...seat, status: 'available' };
-        } else {
-          // Check if we've already selected the maximum number of seats
-          if (requiredTickets.length > 0) {
-            const selectedSeatsCount = Object.keys(seatCategories).length;
-            if (selectedSeatsCount >= requiredTickets.length) {
-              setValidationError(`You can only select ${requiredTickets.length} seat(s). You've already selected the maximum.`);
-              return seat; // Don't allow selection
-            }
-          }
+  const toggleSeat = async (seatId: string) => {
+    // Check if seat is locked by another user (not our session)
+    const isLockedByOther = lockedSeats.some(ls => 
+      ls.seat_id === seatId && 
+      new Date(ls.expires_at) > new Date() &&
+      // Check if this seat is NOT in our currently selected seats
+      !Object.keys(seatCategories).includes(seatId)
+    );
+    if (isLockedByOther) {
+      setValidationError('This seat is currently reserved by another user. Please try a different seat.');
+      return;
+    }
 
-          // Determine which category to assign
-          let categoryToAssign = selectedCategory;
+    // Find the seat in current state
+    const currentSeat = seats.find(s => s.id === seatId);
+    if (!currentSeat || currentSeat.status === 'booked') return;
 
-          if (requiredTickets.length > 0) {
-            // Count already assigned seats
-            const selectedSeatsCount = Object.keys(seatCategories).length;
-            if (selectedSeatsCount < requiredTickets.length) {
-              // Count how many of each category are needed vs assigned
-              const neededCounts = requiredTickets.reduce((acc, cat) => {
-                acc[cat] = (acc[cat] || 0) + 1;
-                return acc;
-              }, {} as Record<TicketCategory, number>);
-              
-              const assignedCounts = Object.values(seatCategories).reduce((acc, cat) => {
-                acc[cat] = (acc[cat] || 0) + 1;
-                return acc;
-              }, {} as Record<TicketCategory, number>);
-
-              // Find first category that needs more seats
-              const neededCategory = (Object.keys(neededCounts) as TicketCategory[]).find(
-                cat => (neededCounts[cat] || 0) > (assignedCounts[cat] || 0)
-              );
-              
-              if (neededCategory) {
-                categoryToAssign = neededCategory;
-              }
-            }
-          }
-
-          setSeatCategories(prev => ({ ...prev, [seatId]: categoryToAssign }));
-
-          // Check if we now have the correct number of seats
-          if (requiredTickets.length > 0) {
-            const willHaveCount = Object.keys(seatCategories).length + 1;
-            if (willHaveCount === requiredTickets.length) {
-              setValidationError('');
-            }
-          }
-
-          return { ...seat, status: 'selected' };
+    if (currentSeat.status === 'selected') {
+      // Unselecting - remove from our categories
+      setSeatCategories(prev => {
+        const updated = { ...prev };
+        delete updated[seatId];
+        return updated;
+      });
+      setValidationError('');
+      
+      setSeats(prev => prev.map(seat => 
+        seat.id === seatId ? { ...seat, status: 'available' } : seat
+      ));
+      
+      // Note: We keep the lock in the database until the user either:
+      // 1. Completes the booking (lock released on checkout)
+      // 2. The lock expires naturally after 5 minutes
+      // This prevents another user from taking the seat while they're still deciding
+    } else {
+      // Selecting - check if we've reached the limit
+      if (requiredTickets.length > 0) {
+        const selectedSeatsCount = Object.keys(seatCategories).length;
+        if (selectedSeatsCount >= requiredTickets.length) {
+          setValidationError(`You can only select ${requiredTickets.length} seat(s). You've already selected the maximum.`);
+          return;
         }
       }
-      return seat;
-    }));
+
+      // Determine which category to assign
+      let categoryToAssign = selectedCategory;
+
+      if (requiredTickets.length > 0) {
+        const selectedSeatsCount = Object.keys(seatCategories).length;
+        if (selectedSeatsCount < requiredTickets.length) {
+          const neededCounts = requiredTickets.reduce((acc, cat) => {
+            acc[cat] = (acc[cat] || 0) + 1;
+            return acc;
+          }, {} as Record<TicketCategory, number>);
+          
+          const assignedCounts = Object.values(seatCategories).reduce((acc, cat) => {
+            acc[cat] = (acc[cat] || 0) + 1;
+            return acc;
+          }, {} as Record<TicketCategory, number>);
+
+          const neededCategory = (Object.keys(neededCounts) as TicketCategory[]).find(
+            cat => (neededCounts[cat] || 0) > (assignedCounts[cat] || 0)
+          );
+          
+          if (neededCategory) {
+            categoryToAssign = neededCategory;
+          }
+        }
+      }
+
+      // Lock the seat on the server
+      const selectedSeatIds = [...Object.keys(seatCategories), seatId];
+      
+      try {
+        const lockResponse = await fetch('/api/seats/lock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            showtime_id: parseInt(showtimeId || '0'),
+            seat_ids: selectedSeatIds,
+            session_token: sessionToken  // Pass existing session token if we have one
+          })
+        });
+
+        const lockData = await lockResponse.json();
+        
+        if (!lockResponse.ok) {
+          setValidationError(lockData.error || 'Failed to reserve seats. They may have been taken by another user.');
+          // Refresh locked seats
+          const refreshResponse = await fetch(`/api/seats/locked/${showtimeId}`);
+          const refreshData = await refreshResponse.json();
+          if (refreshData.locked_seats) {
+            setLockedSeats(refreshData.locked_seats);
+          }
+          return;
+        }
+
+        // Update session token and lock expiration
+        if (lockData.session_token) {
+          setSessionToken(lockData.session_token);
+          setLockExpiresAt(new Date(lockData.expires_at));
+        }
+
+        // Update locked seats from response
+        if (lockData.reserved_seats) {
+          const newLockedSeats = lockData.reserved_seats.map((seat_id: string) => ({
+            seat_id,
+            expires_at: lockData.expires_at
+          }));
+          setLockedSeats(prev => [...prev.filter(ls => !selectedSeatIds.includes(ls.seat_id)), ...newLockedSeats]);
+        }
+      } catch (err) {
+        console.error('Error locking seats:', err);
+        setValidationError('Failed to reserve seats. Please try again.');
+        return;
+      }
+
+      setSeatCategories(prev => ({ ...prev, [seatId]: categoryToAssign }));
+
+      if (requiredTickets.length > 0) {
+        const willHaveCount = Object.keys(seatCategories).length + 1;
+        if (willHaveCount === requiredTickets.length) {
+          setValidationError('');
+        }
+      }
+
+      setSeats(prev => prev.map(seat => 
+        seat.id === seatId ? { ...seat, status: 'selected' } : seat
+      ));
+    }
   };
 
   const selectedSeats = seats.filter(s => s.status === 'selected');
@@ -214,6 +360,18 @@ export default function SeatSelection() {
           bookingDate: new Date().toISOString(),
         });
         localStorage.setItem('bookings', JSON.stringify(existingBookings));
+        
+        // Release seat locks after successful booking
+        if (sessionToken) {
+          fetch('/api/seats/release', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_token: sessionToken }),
+          }).catch(() => {});
+          setSessionToken(null);
+          setLockExpiresAt(null);
+        }
+        
         navigate('/checkout', { state: { booking } });
       })
       .catch(err => {
@@ -331,9 +489,16 @@ export default function SeatSelection() {
                     {rowSeats.map((seat, index) => {
                       const category = seatCategories[seat.id];
                       const isAisle = index === 5;
+                      
+                      // Check if seat is locked by another user
+                      const isLockedByOther = lockedSeats.some(ls => 
+                        ls.seat_id === seat.id && 
+                        new Date(ls.expires_at) > new Date() &&
+                        !sessionToken // Not our session
+                      );
 
                       const seatColor =
-                        seat.status === 'booked' ? 'bg-red-300 cursor-not-allowed' :
+                        seat.status === 'booked' || isLockedByOther ? 'bg-red-300 cursor-not-allowed' :
                         seat.status === 'selected' && category === 'adult' ? 'bg-blue-500 hover:bg-blue-600' :
                         seat.status === 'selected' && category === 'senior' ? 'bg-purple-500 hover:bg-purple-600' :
                         seat.status === 'selected' && category === 'child' ? 'bg-green-500 hover:bg-green-600' :
@@ -344,9 +509,9 @@ export default function SeatSelection() {
                           {isAisle && <div className="w-4" />}
                           <button
                             onClick={() => toggleSeat(seat.id)}
-                            disabled={seat.status === 'booked'}
+                            disabled={seat.status === 'booked' || isLockedByOther}
                             className={`w-8 h-8 rounded-t-lg transition-colors ${seatColor}`}
-                            title={seat.status === 'selected' ? `${seat.id} - ${category}` : seat.id}
+                            title={seat.status === 'selected' ? `${seat.id} - ${category}` : isLockedByOther ? `${seat.id} - Reserved` : seat.id}
                           />
                         </div>
                       );
@@ -377,7 +542,7 @@ export default function SeatSelection() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-300 rounded-t-lg"></div>
-              <span>Booked</span>
+              <span>Booked/Reserved</span>
             </div>
           </div>
 
@@ -388,6 +553,19 @@ export default function SeatSelection() {
                 {validationError}
               </div>
             )}
+            
+            {/* Timer display */}
+            {timeRemaining > 0 && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+                <div className="flex items-center justify-center gap-2 text-yellow-800">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium">
+                    Seats reserved for {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')} - Complete checkout before time runs out!
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-gray-600 mb-1">

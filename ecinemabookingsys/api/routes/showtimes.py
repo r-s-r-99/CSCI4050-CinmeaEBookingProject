@@ -2,12 +2,19 @@ from flask import Blueprint, request, jsonify
 from services.showtime_service import ShowtimeService
 from services.showroom_service import ShowroomService
 from repositories.movie_repository import MovieRepository
+from repositories.seat_reservation_repository import SeatReservationRepository
 from utils.auth import require_admin
+from datetime import datetime, timedelta
+import uuid
 
 showtimes_bp = Blueprint('showtimes', __name__)
 showtime_service = ShowtimeService()
 showroom_service = ShowroomService()
 movie_repo = MovieRepository()
+seat_reservation_repo = SeatReservationRepository()
+
+# Lock duration in minutes
+SEAT_LOCK_DURATION = 5
 
 
 @showtimes_bp.route('/api/showtimes/available-dates')
@@ -172,4 +179,157 @@ def get_movies_for_showtimes():
         return jsonify({'movies': decorated}), 200
     except Exception as e:
         print(f"[MOVIE] Error fetching movies: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============== Seat Reservation / Locking Endpoints ==============
+
+@showtimes_bp.route('/api/seats/lock', methods=['POST'])
+def lock_seats():
+    """
+    Lock seats for a showtime for 5 minutes.
+    
+    Request body:
+    - showtime_id: ID of the showtime
+    - seat_ids: Array of seat IDs to lock
+    - session_token: Optional existing session token to reuse
+    
+    Returns:
+    - session_token: Token to manage the reservation
+    - expires_at: When the lock expires
+    - reserved_seats: Array of successfully locked seats
+    """
+    try:
+        data = request.get_json()
+        showtime_id = data.get('showtime_id')
+        seat_ids = data.get('seat_ids', [])
+        existing_session_token = data.get('session_token')  # Optional: reuse existing session
+
+        if not showtime_id or not seat_ids:
+            return jsonify({'error': 'Missing showtime_id or seat_ids'}), 400
+
+        # Use existing session token if provided, otherwise generate new one
+        session_token = existing_session_token or str(uuid.uuid4())
+        expires_at = datetime.now() + timedelta(minutes=SEAT_LOCK_DURATION)
+
+        # Try to reserve each seat
+        reserved_seats = []
+        failed_seats = []
+
+        for seat_id in seat_ids:
+            # Check if seat is already reserved
+            existing = seat_reservation_repo.find_by_seat_and_showtime(seat_id, showtime_id)
+            if existing:
+                # Check if it's locked by the same session
+                if existing_session_token and existing.get('session_token') == existing_session_token:
+                    # Already locked by this session - that's fine, include it
+                    reserved_seats.append(seat_id)
+                else:
+                    # Locked by different session or no session
+                    failed_seats.append(seat_id)
+                continue
+
+            # Create the reservation
+            success = seat_reservation_repo.create_reservation(
+                showtime_id, [seat_id], session_token, expires_at
+            )
+            if success:
+                reserved_seats.append(seat_id)
+            else:
+                failed_seats.append(seat_id)
+
+        if not reserved_seats:
+            return jsonify({
+                'error': 'No seats could be reserved',
+                'failed_seats': failed_seats
+            }), 409
+
+        return jsonify({
+            'session_token': session_token,
+            'expires_at': expires_at.isoformat(),
+            'reserved_seats': reserved_seats,
+            'failed_seats': failed_seats,
+            'lock_duration_minutes': SEAT_LOCK_DURATION
+        }), 200
+
+    except Exception as e:
+        print(f"[SEAT_LOCK] Error locking seats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/seats/release', methods=['POST'])
+def release_seats():
+    """
+    Release locked seats for a session.
+    
+    Request body:
+    - session_token: Token of the reservation session
+    """
+    try:
+        data = request.get_json()
+        session_token = data.get('session_token')
+
+        if not session_token:
+            return jsonify({'error': 'Missing session_token'}), 400
+
+        seat_reservation_repo.release_by_session(session_token)
+
+        return jsonify({'message': 'Seats released successfully'}), 200
+
+    except Exception as e:
+        print(f"[SEAT_LOCK] Error releasing seats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/seats/extend', methods=['POST'])
+def extend_seat_lock():
+    """
+    Extend the lock time for reserved seats.
+    
+    Request body:
+    - session_token: Token of the reservation session
+    """
+    try:
+        data = request.get_json()
+        session_token = data.get('session_token')
+
+        if not session_token:
+            return jsonify({'error': 'Missing session_token'}), 400
+
+        # Extend by the same duration
+        new_expires_at = datetime.now() + timedelta(minutes=SEAT_LOCK_DURATION)
+        seat_reservation_repo.extend_reservation(session_token, new_expires_at)
+
+        return jsonify({
+            'expires_at': new_expires_at.isoformat(),
+            'lock_duration_minutes': SEAT_LOCK_DURATION
+        }), 200
+
+    except Exception as e:
+        print(f"[SEAT_LOCK] Error extending lock: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/seats/locked/<int:showtime_id>', methods=['GET'])
+def get_locked_seats(showtime_id):
+    """
+    Get all currently locked seats for a showtime.
+    
+    Returns:
+    - locked_seats: Array of locked seat IDs with expiration info
+    """
+    try:
+        reservations = seat_reservation_repo.find_active_by_showtime(showtime_id)
+        
+        locked_seats = []
+        for res in reservations:
+            locked_seats.append({
+                'seat_id': res['seat_id'],
+                'expires_at': res['expires_at'].isoformat() if res['expires_at'] else None
+            })
+
+        return jsonify({'locked_seats': locked_seats}), 200
+
+    except Exception as e:
+        print(f"[SEAT_LOCK] Error getting locked seats: {e}")
         return jsonify({'error': str(e)}), 500
