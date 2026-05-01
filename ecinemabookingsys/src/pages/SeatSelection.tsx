@@ -119,9 +119,22 @@ export default function SeatSelection() {
             // Count already assigned seats
             const selectedSeatsCount = Object.keys(seatCategories).length;
             if (selectedSeatsCount < requiredTickets.length) {
-              // Find which categories are still needed
-              const assignedCategories = Object.values(seatCategories);
-              const neededCategory = requiredTickets.find(cat => !assignedCategories.includes(cat));
+              // Count how many of each category are needed vs assigned
+              const neededCounts = requiredTickets.reduce((acc, cat) => {
+                acc[cat] = (acc[cat] || 0) + 1;
+                return acc;
+              }, {} as Record<TicketCategory, number>);
+              
+              const assignedCounts = Object.values(seatCategories).reduce((acc, cat) => {
+                acc[cat] = (acc[cat] || 0) + 1;
+                return acc;
+              }, {} as Record<TicketCategory, number>);
+
+              // Find first category that needs more seats
+              const neededCategory = (Object.keys(neededCounts) as TicketCategory[]).find(
+                cat => (neededCounts[cat] || 0) > (assignedCounts[cat] || 0)
+              );
+              
               if (neededCategory) {
                 categoryToAssign = neededCategory;
               }
