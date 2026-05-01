@@ -1,5 +1,6 @@
 import time
 from flask import Flask, jsonify, session
+from flask.json.provider import DefaultJSONProvider
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
@@ -13,9 +14,19 @@ from routes.login import login_bp
 from routes.profile import profile_bp
 from routes.forgotpassword import forgotpassword_bp
 from routes.booking import booking_bp
+from routes.recommendations import recommendations_bp
 from db import get_db, close_db
 
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, o):
+        if hasattr(o, 'to_dict'):
+            return o.to_dict()
+        return super().default(o)
+
+
 app = Flask(__name__)
+app.json = CustomJSONProvider(app)
 
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -36,6 +47,7 @@ app.register_blueprint(login_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(forgotpassword_bp)
 app.register_blueprint(booking_bp)
+app.register_blueprint(recommendations_bp)
 
 # Register database connection teardown
 app.teardown_appcontext(close_db)

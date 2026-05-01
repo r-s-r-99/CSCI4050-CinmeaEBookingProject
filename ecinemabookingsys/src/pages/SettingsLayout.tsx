@@ -7,6 +7,7 @@ const settingsMenuItems = [
   { id: 'payment-cards',        label: 'Payment Cards',         icon: CreditCard, path: '/settings/payment-cards' },
   { id: 'security',             label: 'Change Password',       icon: Lock,       path: '/settings/security' },
   { id: 'appearance',           label: 'Preferences/Favorites', icon: Palette,    path: '/settings/appearance' },
+  { id: 'recommended',          label: 'Recommended Movies',    icon: Palette,    path: '/settings/recommended' }
 ];
 
 export default function SettingsLayout() {

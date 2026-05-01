@@ -274,6 +274,17 @@ class BookingService:
         """Get all bookings for a user."""
         return self.booking_repo.find_all_by_user(user_id)
 
+    def get_booked_movies(self, user_id):
+        """Get all unique movies booked by a user."""
+        bookings = self.booking_repo.find_all_by_user(user_id)
+        unique_movies = {}
+        for booking in bookings:
+            if booking.movie and booking.movie.get("id"):
+                movie_id = booking.movie["id"]
+                if movie_id not in unique_movies:
+                    unique_movies[movie_id] = booking.movie
+        return list(unique_movies.values())
+
     def cancel_booking(self, booking_id):
         """Cancel a booking."""
         booking = self.booking_repo.find_by_id(booking_id)
