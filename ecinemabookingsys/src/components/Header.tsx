@@ -52,23 +52,23 @@ export function Header() {
               <Film className="w-5 h-5" />
               <span>Movies</span>
             </Link>
-            <Link
-              to="/bookings"
-              className={`flex items-center gap-2 hover:text-red-400 transition-colors ${isActive('/bookings') ? 'text-red-400' : ''
-                }`}
-            >
-              <Ticket className="w-5 h-5" />
-              <span>My Order History</span>
-            </Link>
+            {auth.isLoggedIn && (
+              <Link
+                to="/bookings"
+                className={`flex items-center gap-2 hover:text-red-400 transition-colors ${isActive('/bookings') ? 'text-red-400' : ''}`}
+              >
+                <Ticket className="w-5 h-5" />
+                <span>My Order History</span>
+              </Link>
+            )}
 
             {auth.isLoggedIn && auth.role === 'admin' && (
               <Link
                 to="/admin"
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
-                  isActive('/admin')
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${isActive('/admin')
                     ? 'bg-purple-600 border-purple-500 text-white'
                     : 'border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
-                }`}
+                  }`}
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Admin Panel</span>

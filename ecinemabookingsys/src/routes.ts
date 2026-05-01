@@ -48,15 +48,16 @@ export const router = createBrowserRouter([
       { path: 'register', Component: Register },
 
 
-      { path: 'admin',
+      {
+        path: 'admin',
         Component: ProtectedRoute,
         children: [
-          { index: true,                      Component: AdminHome },
-          { path: 'manage-movies',            Component: ManageMovies },
-          { path: 'manage-movies/admin-movie/:id',          Component: AdminMovieDetail },
-          { path: 'manage-movies/edit-movie/:id',          Component: EditMovie },
-          { path: 'manage-movies/add-movies',  Component: AddMovies },
-          { path: 'manage-movies/manage-showtimes',  Component: ManageShowtimes }
+          { index: true, Component: AdminHome },
+          { path: 'manage-movies', Component: ManageMovies },
+          { path: 'manage-movies/admin-movie/:id', Component: AdminMovieDetail },
+          { path: 'manage-movies/edit-movie/:id', Component: EditMovie },
+          { path: 'manage-movies/add-movies', Component: AddMovies },
+          { path: 'manage-movies/manage-showtimes', Component: ManageShowtimes }
         ],
       },
 
@@ -87,18 +88,23 @@ export const router = createBrowserRouter([
         children: [{ index: true, Component: EditMovie }],
       },
       {
+        path: 'bookings',
+        Component: ProtectedRoute,
+        children: [{ index: true, Component: Bookings }],
+      },
+      {
         path: 'settings',
         Component: ProtectedRoute,
         children: [
           {
             Component: SettingsLayout,
             children: [
-              { path: 'edit-profile',         Component: EditProfile },
+              { path: 'edit-profile', Component: EditProfile },
               { path: 'edit-mailing-address', Component: EditMailingAddress },
-              { path: 'payment-cards',        Component: PaymentCards },
-              { path: 'security',             Component: ChangePassword },
-              { path: 'appearance',           Component: Preferences},
-              { path: 'recommended',          Component: Recommended}              
+              { path: 'payment-cards', Component: PaymentCards },
+              { path: 'security', Component: ChangePassword },
+              { path: 'appearance', Component: Preferences },
+              { path: 'recommended', Component: Recommended }
             ],
           },
         ],
