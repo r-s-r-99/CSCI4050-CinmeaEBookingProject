@@ -119,8 +119,12 @@ export default function SeatSelection() {
             // Count already assigned seats
             const selectedSeatsCount = Object.keys(seatCategories).length;
             if (selectedSeatsCount < requiredTickets.length) {
-              // Auto-assign the next required category
-              categoryToAssign = requiredTickets[selectedSeatsCount];
+              // Find which categories are still needed
+              const assignedCategories = Object.values(seatCategories);
+              const neededCategory = requiredTickets.find(cat => !assignedCategories.includes(cat));
+              if (neededCategory) {
+                categoryToAssign = neededCategory;
+              }
             }
           }
 
