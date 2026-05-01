@@ -10,6 +10,37 @@ showroom_service = ShowroomService()
 movie_repo = MovieRepository()
 
 
+@showtimes_bp.route('/api/showtimes/available-dates')
+def get_available_dates():
+    """Get all unique dates where showtimes exist."""
+    try:
+        dates = showtime_service.get_available_dates()
+        print(f"[DEBUG] Available dates from service: {dates}")
+        return jsonify({'dates': dates}), 200
+    except Exception as e:
+        print(f"[SHOWTIME] Error fetching available dates: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/showtimes/available-times')
+def get_available_times():
+    """Get all unique times for a specific date.
+
+    Query params:
+    - date: YYYY-MM-DD format (required)
+    """
+    try:
+        show_date = request.args.get('date')
+        if not show_date:
+            return jsonify({'error': 'Missing date parameter'}), 400
+
+        times = showtime_service.get_available_times_for_date(show_date)
+        return jsonify({'times': times}), 200
+    except Exception as e:
+        print(f"[SHOWTIME] Error fetching available times: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @showtimes_bp.route('/api/showtimes/detail/<int:showtime_id>')
 def get_showtime_detail(showtime_id):
     """Get a single showtime's details."""

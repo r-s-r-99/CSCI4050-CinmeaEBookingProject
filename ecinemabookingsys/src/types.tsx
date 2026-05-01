@@ -7,6 +7,7 @@ export interface Movie {
   poster_url: string;
   trailer_url: string;
   status: string;
+  showtimes?: Showtime[];
 }
 
 export interface Showtime {

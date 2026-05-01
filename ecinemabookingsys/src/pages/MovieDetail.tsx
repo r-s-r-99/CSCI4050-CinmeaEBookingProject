@@ -34,13 +34,18 @@ export default function MovieDetail() {
       .then(res => res.json())
       .then(data => {
         console.log('Raw showtimes data:', data); // Log raw response
-        const mapped = data.showtimes.map((s: any) => ({
-          id: String(s.showtime_id),
-          movieId: String(s.movie_id),
-          date: new Date(s.show_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-          time: s.show_time,
-          theater: `Showroom ${s.room_id}`,
-        }));
+        const mapped = data.showtimes.map((s: any) => {
+          // Parse date string as local date, not UTC
+          const [year, month, day] = s.show_date.split('-');
+          const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return {
+            id: String(s.showtime_id),
+            movieId: String(s.movie_id),
+            date: localDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+            time: s.show_time,
+            theater: `Showroom ${s.room_id}`,
+          };
+        });
         console.log('mapped showtimes:', mapped);
         setShowtimes(mapped);
       })

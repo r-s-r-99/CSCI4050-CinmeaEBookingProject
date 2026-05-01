@@ -41,53 +41,44 @@ class ShowtimeService:
         from db import get_db
 
         conn = get_db()
-        try:
-            # Convert show_time to minutes for easier comparison
-            show_time_obj = datetime.strptime(show_time, '%H:%M')
-            show_time_minutes = show_time_obj.hour * 60 + show_time_obj.minute
+        show_time_obj = datetime.strptime(show_time, '%H:%M')
+        show_time_minutes = show_time_obj.hour * 60 + show_time_obj.minute
 
-            # Get all showtimes in this room on this date
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT s.showtime_id, s.movie_id, m.title, s.show_time
-                    FROM Showtime s
-                    JOIN Movie m ON s.movie_id = m.movie_id
-                    WHERE s.room_id = %s AND s.show_date = %s
-                """, (room_id, show_date))
-                existing = cursor.fetchall()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT s.showtime_id, s.movie_id, m.title, s.show_time
+                FROM Showtime s
+                JOIN Movie m ON s.movie_id = m.movie_id
+                WHERE s.room_id = %s AND s.show_date = %s
+            """, (room_id, show_date))
+            existing = cursor.fetchall()
 
-            conflicts = []
-            # Check each existing showtime for conflicts
-            for row in existing:
-                # Convert show_time to string if needed
-                existing_time = row['show_time']
-                if isinstance(existing_time, str):
-                    time_str = existing_time
-                else:
-                    time_str = str(existing_time)
+        conflicts = []
+        for row in existing:
+            existing_time = row['show_time']
+            if isinstance(existing_time, str):
+                time_str = existing_time
+            else:
+                time_str = str(existing_time)
 
-                # Extract HH:MM if it's HH:MM:SS format
-                if len(time_str) > 5:
-                    time_str = time_str[:5]
+            if len(time_str) > 5:
+                time_str = time_str[:5]
 
-                existing_time_obj = datetime.strptime(time_str, '%H:%M')
-                existing_time_minutes = existing_time_obj.hour * 60 + existing_time_obj.minute
+            existing_time_obj = datetime.strptime(time_str, '%H:%M')
+            existing_time_minutes = existing_time_obj.hour * 60 + existing_time_obj.minute
 
-                # Movies typically run 90-180 minutes, check 2-hour buffer
-                time_diff = abs(show_time_minutes - existing_time_minutes)
-                if time_diff == 0:  # Exact same time
-                    conflicts.append({
-                        'showtime_id': row['showtime_id'],
-                        'movie_title': row['title'],
-                        'show_time': time_str,
-                    })
+            time_diff = abs(show_time_minutes - existing_time_minutes)
+            if time_diff == 0:
+                conflicts.append({
+                    'showtime_id': row['showtime_id'],
+                    'movie_title': row['title'],
+                    'show_time': time_str,
+                })
 
-            return {
-                'has_conflict': len(conflicts) > 0,
-                'conflicting_showtimes': conflicts
-            }
-        finally:
-            conn.close()
+        return {
+            'has_conflict': len(conflicts) > 0,
+            'conflicting_showtimes': conflicts
+        }
 
     def create_showtime(self, movie_id, show_date, show_time, room_id):
         """
@@ -223,6 +214,77 @@ class ShowtimeService:
             })
 
         return decorated
+
+    def get_available_dates(self):
+        """Get all unique dates where showtimes exist."""
+        from db import get_db
+        from datetime import datetime
+
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT show_date FROM Showtime WHERE show_date IS NOT NULL ORDER BY show_date")
+            rows = cursor.fetchall()
+
+        dates = []
+        for row in rows:
+            if row['show_date']:
+                date_obj = row['show_date']
+                if isinstance(date_obj, str):
+                    dates.append(date_obj)
+                else:
+                    dates.append(date_obj.strftime('%Y-%m-%d'))
+
+        return dates
+
+    def get_available_times_for_date(self, show_date):
+        """Get all unique times for a specific date."""
+        from db import get_db
+
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT DISTINCT show_time FROM Showtime WHERE show_date = %s ORDER BY show_time",
+                (show_date,)
+            )
+            rows = cursor.fetchall()
+
+        times = []
+        for row in rows:
+            if row['show_time']:
+                time_str = str(row['show_time'])
+                if len(time_str) > 5:
+                    time_str = time_str[:5]
+                times.append(time_str)
+
+        return times
+
+    def get_movies_with_showtimes(self, show_date=None, show_time=None):
+        """Get unique movies that have showtimes matching criteria."""
+        from db import get_db
+        from models.movie import Movie
+
+        conn = get_db()
+        query = "SELECT DISTINCT m.* FROM Movie m JOIN Showtime s ON m.movie_id = s.movie_id WHERE 1=1"
+        params = []
+
+        if show_date:
+            query += " AND s.show_date = %s"
+            params.append(show_date)
+
+        if show_time:
+            query += " AND s.show_time = %s"
+            params.append(show_time)
+
+        with conn.cursor() as cursor:
+            cursor.execute(query, params or ())
+            rows = cursor.fetchall()
+
+        movies = []
+        for row in rows:
+            movie = Movie(**row)
+            movies.append(movie)
+
+        return movies
 
 
 

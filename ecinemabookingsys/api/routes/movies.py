@@ -2,11 +2,13 @@ from flask import Blueprint, request, jsonify
 from repositories.movie_repository import MovieRepository
 from models.movie import Movie
 from services.movie_decorator import MovieDecorator
+from services.showtime_service import ShowtimeService
 from utils.auth import require_admin, get_user_role_from_session
 
 movies_bp = Blueprint('movies', __name__)
 movie_repo = MovieRepository()
 movie_decorator = MovieDecorator(movie_repo)
+showtime_service = ShowtimeService()
 
 
 @movies_bp.route('/api/movies', methods=['POST'])
@@ -66,6 +68,39 @@ def get_movies():
     all_movies = movie_repo.find_all()
     decorated_movies = movie_decorator.get_decorated_movies(all_movies, user_role, force_customer_view=force_customer_view)
     return {"movies": decorated_movies}
+
+
+@movies_bp.route('/api/movies/by-showtime')
+def get_movies_by_showtime():
+    """Get movies filtered by showtime date and/or time.
+
+    Query params:
+    - date: YYYY-MM-DD format (optional)
+    - time: HH:MM format (optional)
+    - force_customer_view: If 'true', shows customer view even for admins
+    """
+    try:
+        user_role = get_user_role_from_session()
+        force_customer_view = request.args.get('force_customer_view', 'false').lower() == 'true'
+
+        show_date = request.args.get('date')
+        show_time = request.args.get('time')
+
+        print(f"[DEBUG] Filtering by date={show_date}, time={show_time}")
+
+        movies = showtime_service.get_movies_with_showtimes(show_date, show_time)
+        print(f"[DEBUG] Found {len(movies)} movies")
+        for m in movies:
+            print(f"[DEBUG]   - {m.title}")
+
+        decorated_movies = movie_decorator.get_decorated_movies(movies, user_role, force_customer_view=force_customer_view)
+        return {"movies": decorated_movies}, 200
+
+    except Exception as e:
+        print(f"[MOVIE] Error filtering by showtime: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 @movies_bp.route('/api/movies/now-showing')
