@@ -120,7 +120,7 @@ def process_payment():
                     WHERE s.showtime_id = %s
                 """, (temp_booking.get('showtime_id'),))
                 result = cursor.fetchone()
-            conn.close()
+            
 
             if result:
                 show_date = result['show_date']

@@ -409,33 +409,32 @@ class TicketRepository(CRUDRepository):
         """
 
         conn = self.get_db()
-        try:
-            with conn.cursor() as cursor:
-                for ticket_data in tickets_data:
-                    # Handle both Ticket objects and dicts
-                    if isinstance(ticket_data, dict):
-                        # Dict format
-                        booking_id = ticket_data.get("booking_id")
-                        seat_id = ticket_data.get("seat_id")
-                        ticket_type = ticket_data.get("ticket_type")
-                        show_date = ticket_data.get("show_date")
-                        ticket_price = ticket_data.get("ticket_price")
-                    else:
-                        # Ticket object format
-                        booking_id = ticket_data.booking_id
-                        seat_id = ticket_data.seat_id
-                        ticket_type = ticket_data.ticket_type
-                        show_date = ticket_data.show_date
-                        ticket_price = ticket_data.ticket_price
 
-                    cursor.execute(
-                        query,
-                        (booking_id, seat_id, ticket_type, show_date, ticket_price),
-                    )
-                conn.commit()
-            return True
-        finally:
-            conn.close()
+        with conn.cursor() as cursor:
+            for ticket_data in tickets_data:
+                # Handle both Ticket objects and dicts
+                if isinstance(ticket_data, dict):
+                    # Dict format
+                    booking_id = ticket_data.get("booking_id")
+                    seat_id = ticket_data.get("seat_id")
+                    ticket_type = ticket_data.get("ticket_type")
+                    show_date = ticket_data.get("show_date")
+                    ticket_price = ticket_data.get("ticket_price")
+                else:
+                    # Ticket object format
+                    booking_id = ticket_data.booking_id
+                    seat_id = ticket_data.seat_id
+                    ticket_type = ticket_data.ticket_type
+                    show_date = ticket_data.show_date
+                    ticket_price = ticket_data.ticket_price
+
+                cursor.execute(
+                    query,
+                    (booking_id, seat_id, ticket_type, show_date, ticket_price),
+                )
+            conn.commit()
+        return True
+
 
     def delete(self, ticket):
         """Delete ticket."""

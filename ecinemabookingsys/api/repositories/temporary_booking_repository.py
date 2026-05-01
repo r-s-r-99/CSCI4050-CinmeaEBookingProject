@@ -30,17 +30,14 @@ class TemporaryBookingRepository(CRUDRepository):
             from db import get_db
 
             conn = get_db()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(query, (token,))
-                    row = cursor.fetchone()
+            with conn.cursor() as cursor:
+                cursor.execute(query, (token,))
+                row = cursor.fetchone()
 
-                if row:
-                    booking_data = json.loads(row["booking_data"])
-                    return booking_data
-                return None
-            finally:
-                conn.close()
+            if row:
+                booking_data = json.loads(row["booking_data"])
+                return booking_data
+            return None
         except Exception as e:
             print(f"[TEMP_BOOKING] Could not find temp booking: {e}")
             return None
@@ -66,16 +63,14 @@ class TemporaryBookingRepository(CRUDRepository):
             from db import get_db
 
             conn = get_db()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        query,
-                        (token, user_id, json.dumps(booking_data), expires_at),
-                    )
-                    conn.commit()
-                return True
-            finally:
-                conn.close()
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    query,
+                    (token, user_id, json.dumps(booking_data), expires_at),
+                )
+                conn.commit()
+            return True
+
         except Exception as e:
             # Table doesn't exist - that's okay, session storage is fallback
             print(f"[TEMP_BOOKING] Could not store in DB: {e}. Using session storage.")
@@ -96,13 +91,11 @@ class TemporaryBookingRepository(CRUDRepository):
             from db import get_db
 
             conn = get_db()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(query, (token,))
-                    conn.commit()
-                return True
-            finally:
-                conn.close()
+            with conn.cursor() as cursor:
+                cursor.execute(query, (token,))
+                conn.commit()
+            return True
+
         except Exception as e:
             print(f"[TEMP_BOOKING] Could not delete temp booking: {e}")
             return False
