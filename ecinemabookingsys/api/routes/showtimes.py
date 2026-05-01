@@ -1,13 +1,19 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from services.showtime_service import ShowtimeService
 from services.showroom_service import ShowroomService
 from repositories.movie_repository import MovieRepository
+from repositories.booking_repository import TicketRepository
+from repositories.seat_repository import SeatRepository
+from repositories.seat_reservation_repository import SeatReservationRepository
 from utils.auth import require_admin
 
 showtimes_bp = Blueprint('showtimes', __name__)
 showtime_service = ShowtimeService()
 showroom_service = ShowroomService()
 movie_repo = MovieRepository()
+ticket_repo = TicketRepository()
+seat_repo = SeatRepository()
+seat_reservation_repo = SeatReservationRepository()
 
 
 @showtimes_bp.route('/api/showtimes/available-dates')
@@ -59,6 +65,8 @@ def get_showtime_detail(showtime_id):
         return jsonify({'showtime': matching}), 200
     except Exception as e:
         print(f"[SHOWTIME] Error fetching showtime detail {showtime_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -70,6 +78,8 @@ def get_showtimes_by_movie(movie_id):
         return jsonify({'showtimes': decorated}), 200
     except Exception as e:
         print(f"[SHOWTIME] Error fetching showtimes for movie {movie_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -172,4 +182,113 @@ def get_movies_for_showtimes():
         return jsonify({'movies': decorated}), 200
     except Exception as e:
         print(f"[MOVIE] Error fetching movies: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/showtimes/<int:showtime_id>/booked-seats', methods=['GET'])
+def get_booked_seats(showtime_id):
+    """Get all booked and reserved seat numbers for a specific showtime."""
+    try:
+        # Get showtime to find the room_id
+        showtime = showtime_service.showtime_repo.find_by_id(showtime_id)
+        if not showtime:
+            return jsonify({'error': 'Showtime not found'}), 404
+
+        room_id = showtime.room_id
+
+        # Get booked seat IDs
+        booked_seat_ids = ticket_repo.find_booked_seats_by_showtime(showtime_id)
+        reserved_seat_ids = seat_reservation_repo.get_reserved_seats(showtime_id)
+
+        # Convert seat IDs to seat numbers
+        booked_seat_numbers = []
+        for seat_id in booked_seat_ids + reserved_seat_ids:
+            seat = seat_repo.find_by_id(seat_id)
+            if seat:
+                booked_seat_numbers.append(seat.seat_number)
+
+        return jsonify({'booked_seats': booked_seat_numbers}), 200
+    except Exception as e:
+        print(f"[SHOWTIME] Error fetching booked seats for showtime {showtime_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/showtimes/<int:showtime_id>/reserve-seats', methods=['POST'])
+def reserve_seats(showtime_id):
+    """Reserve seats for the user during checkout process."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json()
+        seat_numbers = data.get('seat_ids', []) if data else []
+
+        if not seat_numbers:
+            print(f"[RESERVE_SEATS] No seats provided. Data: {data}")
+            return jsonify({'error': 'No seats provided'}), 400
+
+        # Get showtime to find the room_id
+        showtime = showtime_service.showtime_repo.find_by_id(showtime_id)
+        if not showtime:
+            print(f"[RESERVE_SEATS] Showtime {showtime_id} not found")
+            return jsonify({'error': 'Showtime not found'}), 404
+
+        room_id = showtime.room_id
+        user_id = session['user_id']
+
+        # Release any existing reservations for this user on this showtime first
+        seat_reservation_repo.release_all_reservations(user_id, showtime_id)
+
+        # Convert seat numbers (like "B6") to actual seat_ids
+        seat_ids = []
+        for seat_number in seat_numbers:
+            seat = seat_repo.find_by_number_and_room(seat_number, room_id)
+            if seat:
+                seat_ids.append(seat.seat_id)
+            else:
+                print(f"[RESERVE_SEATS] Could not find seat {seat_number} in room {room_id}")
+
+        if not seat_ids:
+            print(f"[RESERVE_SEATS] Could not find any valid seats. Requested: {seat_numbers}, Room: {room_id}")
+            return jsonify({'error': 'Could not find requested seats'}), 400
+
+        reservations = seat_reservation_repo.reserve_seats(
+            user_id=user_id,
+            showtime_id=showtime_id,
+            seat_ids=seat_ids,
+            duration_minutes=5
+        )
+
+        return jsonify({
+            'status': 'success',
+            'message': f'Reserved {len(reservations)} seat(s) for 5 minutes',
+            'reservations': reservations
+        }), 201
+
+    except Exception as e:
+        print(f"[RESERVE_SEATS] Error reserving seats: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@showtimes_bp.route('/api/showtimes/<int:showtime_id>/release-seats', methods=['POST'])
+def release_seats(showtime_id):
+    """Release seat reservations (called when user completes booking or cancels)."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        user_id = session['user_id']
+        seat_reservation_repo.release_all_reservations(user_id, showtime_id)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Seat reservations released'
+        }), 200
+
+    except Exception as e:
+        print(f"[SHOWTIME] Error releasing seats: {e}")
         return jsonify({'error': str(e)}), 500

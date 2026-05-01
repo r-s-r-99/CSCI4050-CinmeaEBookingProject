@@ -72,24 +72,68 @@ export default function SeatSelection() {
       .finally(() => setLoading(false));
   }, [showtimeId, location.state]);
 
-  useEffect(() => {
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    const seatsPerRow = 12;
-    const newSeats: Seat[] = [];
-    rows.forEach((row) => {
-      for (let i = 1; i <= seatsPerRow; i++) {
-        const isBooked = Math.random() < 0.3;
-        newSeats.push({
-          id: `${row}${i}`,
-          row,
-          number: i,
-          status: isBooked ? 'booked' : 'available',
-          type: 'regular',
+  const loadSeats = () => {
+    fetch(`/api/showtimes/${showtimeId}/booked-seats`)
+      .then(res => res.json())
+      .then(data => {
+        const bookedSeatIds = new Set(data.booked_seats || []);
+        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const seatsPerRow = 12;
+        const newSeats: Seat[] = [];
+        rows.forEach((row) => {
+          for (let i = 1; i <= seatsPerRow; i++) {
+            const seatId = `${row}${i}`;
+            const isBooked = bookedSeatIds.has(seatId);
+            newSeats.push({
+              id: seatId,
+              row,
+              number: i,
+              status: isBooked ? 'booked' : 'available',
+              type: 'regular',
+            });
+          }
         });
-      }
-    });
-    setSeats(newSeats);
-  }, []);
+        setSeats(newSeats);
+        // Reset seat selections when refreshing
+        setSeatCategories({});
+        setValidationError('');
+      })
+      .catch(err => {
+        console.error('Error fetching booked seats:', err);
+        // Fallback: generate random seats if API fails
+        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const seatsPerRow = 12;
+        const newSeats: Seat[] = [];
+        rows.forEach((row) => {
+          for (let i = 1; i <= seatsPerRow; i++) {
+            const isBooked = Math.random() < 0.3;
+            newSeats.push({
+              id: `${row}${i}`,
+              row,
+              number: i,
+              status: isBooked ? 'booked' : 'available',
+              type: 'regular',
+            });
+          }
+        });
+        setSeats(newSeats);
+        // Reset seat selections when refreshing
+        setSeatCategories({});
+        setValidationError('');
+      });
+  };
+
+  useEffect(() => {
+    loadSeats();
+
+    // Also refetch seats when page comes back into focus
+    const handleFocus = () => {
+      loadSeats();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [showtimeId]);
 
   const toggleSeat = (seatId: string) => {
     setSeats(prev => prev.map(seat => {
@@ -179,7 +223,24 @@ export default function SeatSelection() {
       .then(user => {
         if (user === null) return; // Already handled redirect above
 
-        // User is authenticated, proceed with checkout
+        // User is authenticated, reserve seats for 5 minutes
+        const seatIds = selectedSeats.map(s => s.id);
+        return fetch(`/api/showtimes/${showtimeId}/reserve-seats`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seat_ids: seatIds })
+        }).then(res => res.json()).then(reserveData => {
+          if (reserveData.status !== 'success') {
+            throw new Error(reserveData.error || 'Failed to reserve seats');
+          }
+          return { user, reserveData };
+        });
+      })
+      .then(result => {
+        if (result === null) return; // Already handled redirect above
+
+        // Seats reserved successfully, proceed with checkout
         const seatsWithCategory: SeatWithCategory[] = selectedSeats.map(seat => ({
           ...seat,
           category: seatCategories[seat.id] || 'adult',
@@ -200,8 +261,8 @@ export default function SeatSelection() {
         navigate('/checkout', { state: { booking } });
       })
       .catch(err => {
-        console.error('Error checking authentication:', err);
-        setValidationError('An error occurred. Please try again.');
+        console.error('Error during booking:', err);
+        setValidationError(err.message || 'An error occurred. Please try again.');
       });
   };
 

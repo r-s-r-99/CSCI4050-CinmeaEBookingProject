@@ -16,6 +16,7 @@ from repositories.showroom_repository import ShowroomRepository
 from repositories.promotion_repository import PromotionRepository
 from repositories.payment_card_repository import PaymentCardRepository
 from repositories.temporary_booking_repository import TemporaryBookingRepository
+from repositories.seat_reservation_repository import SeatReservationRepository
 from models.ticket import Ticket
 
 
@@ -41,6 +42,7 @@ class BookingService:
         self.promotion_repo = PromotionRepository()
         self.payment_card_repo = PaymentCardRepository()
         self.temp_booking_repo = TemporaryBookingRepository()
+        self.seat_reservation_repo = SeatReservationRepository()
 
 
     def create_temporary_booking(self, user_id, showtime_id, seats, email, total_price):
@@ -245,6 +247,9 @@ class BookingService:
 
         # Delete temporary booking record via repository
         self.temp_booking_repo.delete(token)
+
+        # Release seat reservations now that booking is confirmed
+        self.seat_reservation_repo.release_all_reservations(user_id, showtime_id)
 
         # Reload booking with all relationships
         return self.booking_repo.find_by_id(booking.booking_id)

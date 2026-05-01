@@ -453,3 +453,14 @@ class TicketRepository(CRUDRepository):
         rows = self.execute_query(query)
         return [Ticket(**dict(row)) for row in rows]
 
+    def find_booked_seats_by_showtime(self, showtime_id):
+        """Get all booked seat IDs for a specific showtime."""
+        query = """
+            SELECT DISTINCT t.seat_id
+            FROM Ticket t
+            JOIN Booking b ON t.booking_id = b.booking_id
+            WHERE b.showtime_id = %s
+        """
+        rows = self.execute_query(query, (showtime_id,))
+        return [row["seat_id"] for row in rows]
+
