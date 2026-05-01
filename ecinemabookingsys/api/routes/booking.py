@@ -211,9 +211,6 @@ def verify_booking(token):
         print(f"[VERIFY] Error verifying booking: {e}")
         return jsonify({'error': str(e)}), 500
 
-
-
-
 @booking_bp.route('/api/bookings/my-bookings', methods=['GET'])
 def get_my_bookings():
     """

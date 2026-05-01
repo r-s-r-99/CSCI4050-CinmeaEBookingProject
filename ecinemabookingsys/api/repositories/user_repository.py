@@ -21,6 +21,30 @@ class UserRepository(CRUDRepository):
         query = "SELECT user_id, email, first_name, last_name, role FROM User WHERE user_id = %s"
         return self.execute_query_one(query, (user_id,))
 
+    def find_by_id_full(self, user_id):
+        """Find user by ID with all fields."""
+        query = """
+            SELECT user_id, password, email, first_name, last_name, phone_number, role, promo_subscribed, account_status
+            FROM User WHERE user_id = %s
+        """
+        return self.execute_query_one(query, (user_id,))
+
+    def find_by_email_full(self, email):
+        """Find user by email with password and role for login."""
+        query = """
+            SELECT user_id, password, role, email
+            FROM User WHERE email = %s
+        """
+        return self.execute_query_one(query, (email,))
+
+    def find_for_login(self, email):
+        """Find user for login with account status."""
+        query = """
+            SELECT user_id, email, password, account_status, role
+            FROM User WHERE email = %s
+        """
+        return self.execute_query_one(query, (email,))
+
     def create_user(self, email, password, first_name, last_name, phone_number, promo_subscribed=False):
         """
         Create a new user with hashed password.

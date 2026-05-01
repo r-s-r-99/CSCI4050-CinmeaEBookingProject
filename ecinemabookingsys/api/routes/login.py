@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from models.user import User
-from db import get_db
+from db import get_db, close_db
 import bcrypt
 
 login_bp = Blueprint('login', __name__)
@@ -38,4 +38,6 @@ def get_current_user():
 @login_bp.route('/api/logout', methods=['POST'])
 def logout():
     session.clear()
+    close_db()
+    print(f"[LOGOUT] User logged out and database connection closed")
     return jsonify({'success': True}), 200

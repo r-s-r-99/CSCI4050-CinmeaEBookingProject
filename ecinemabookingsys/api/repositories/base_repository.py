@@ -74,44 +74,32 @@ class CRUDRepository(BaseRepository):
     def execute_query(query, params=None):
         """Execute a SELECT query and return results."""
         conn = BaseRepository.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params or ())
-                return cursor.fetchall()
-        finally:
-            conn.close()
+        with conn.cursor() as cursor:
+            cursor.execute(query, params or ())
+            return cursor.fetchall()
 
     @staticmethod
     def execute_query_one(query, params=None):
         """Execute a SELECT query and return single result."""
         conn = BaseRepository.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params or ())
-                return cursor.fetchone()
-        finally:
-            conn.close()
+        with conn.cursor() as cursor:
+            cursor.execute(query, params or ())
+            return cursor.fetchone()
 
     @staticmethod
     def execute_update(query, params=None):
         """Execute INSERT/UPDATE/DELETE query."""
         conn = BaseRepository.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params or ())
-                conn.commit()
-                return cursor.rowcount
-        finally:
-            conn.close()
+        with conn.cursor() as cursor:
+            cursor.execute(query, params or ())
+            conn.commit()
+            return cursor.rowcount
 
     @staticmethod
     def execute_insert_get_id(query, params=None):
         """Execute INSERT and return generated ID."""
         conn = BaseRepository.get_db()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params or ())
-                conn.commit()
-                return cursor.lastrowid
-        finally:
-            conn.close()
+        with conn.cursor() as cursor:
+            cursor.execute(query, params or ())
+            conn.commit()
+            return cursor.lastrowid

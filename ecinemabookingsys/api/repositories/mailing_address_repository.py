@@ -20,8 +20,26 @@ class MailingAddressRepository(CRUDRepository):
 
     def find_by_user(self, user_id):
         """Find mailing address for a user."""
-        query = "SELECT * FROM MailingAddress WHERE user_id = %s"
+        query = "SELECT user_id, house_number, street, apt, zip FROM MailingAddress WHERE user_id = %s"
         return self.execute_query_one(query, (user_id,))
+
+    def check_exists_by_user(self, user_id):
+        """Check if mailing address exists for user."""
+        query = "SELECT user_id FROM MailingAddress WHERE user_id = %s"
+        return self.execute_query_one(query, (user_id,))
+
+    def save_or_update(self, user_id, house_number, street, apt, zip_code):
+        """Save or update mailing address for user."""
+        query = """
+            INSERT INTO MailingAddress (user_id, house_number, street, apt, zip)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            house_number = VALUES(house_number),
+            street = VALUES(street),
+            apt = VALUES(apt),
+            zip = VALUES(zip)
+        """
+        return self.execute_update(query, (user_id, house_number, street, apt, zip_code))
 
     def create_address(self, user_id, house_number, street, apt, zip_code):
         """

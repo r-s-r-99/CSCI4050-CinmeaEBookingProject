@@ -13,7 +13,7 @@ from routes.login import login_bp
 from routes.profile import profile_bp
 from routes.forgotpassword import forgotpassword_bp
 from routes.booking import booking_bp
-from db import get_db
+from db import get_db, close_db
 
 app = Flask(__name__)
 
@@ -23,8 +23,8 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_DOMAIN'] = None
 
-CORS(app, 
-     supports_credentials=True, 
+CORS(app,
+     supports_credentials=True,
      origins=["http://localhost:5173"],
      allow_headers=["Content-Type"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
@@ -37,6 +37,9 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(forgotpassword_bp)
 app.register_blueprint(booking_bp)
 
+# Register database connection teardown
+app.teardown_appcontext(close_db)
+
 @app.route('/api/debug-session')
 def debug_session():
     return jsonify(dict(session))
@@ -48,7 +51,7 @@ def get_current_time():
 @app.route('/api/ping')
 def ping():
     conn = get_db()
-    conn.close()
+    # Connection is automatically managed by singleton
     return {'status': 'connected'}
 
 if __name__ == '__main__':
